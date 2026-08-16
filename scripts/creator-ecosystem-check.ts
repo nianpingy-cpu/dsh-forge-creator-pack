@@ -66,6 +66,28 @@ const NO_VENDOR_UNLESS_EXPLICIT = ["social-auto-upload"];
 /** Copyleft licenses that force adapter/provider integration (no copying). */
 const COPYLEFT_LICENSES = ["GPL", "AGPL", "LGPL", "MPL"];
 
+/**
+ * Whether a license string counts as an explicit license. Real-world values
+ * such as "none (no license file; not explicit)" or "unclear — see notes"
+ * must NOT be treated as explicit (review finding #1).
+ */
+export function isExplicitLicense(license: string): boolean {
+  const normalized = license.trim().toLowerCase();
+  if (normalized === "") return false;
+  if (["unclear", "unknown", "none", "tbd", "n/a"].includes(normalized)) {
+    return false;
+  }
+  if (
+    normalized.startsWith("none") ||
+    normalized.startsWith("no license") ||
+    normalized.startsWith("unclear") ||
+    normalized.startsWith("unknown")
+  ) {
+    return false;
+  }
+  return true;
+}
+
 export interface EcosystemValidation {
   valid: boolean;
   problems: string[];
@@ -82,6 +104,16 @@ export function validateEcosystemMatrix(
 
   const byCapability = new Map(entries.map((e) => [e.capability, e]));
 
+  // 0. Duplicate capability rows are a defect (review finding #4).
+  const seen = new Set<string>();
+  for (const entry of entries) {
+    const capability = String(entry.capability ?? "");
+    if (seen.has(capability)) {
+      problems.push(`duplicate capability row: ${capability}`);
+    }
+    seen.add(capability);
+  }
+
   // 1. All ten target creator plugin capabilities must be present.
   for (const required of REQUIRED_CREATOR_CAPABILITIES) {
     if (!byCapability.has(required)) {
@@ -90,34 +122,36 @@ export function validateEcosystemMatrix(
   }
 
   // 2. Every row records upstream, license, integration mode, decision.
+  // Structurally invalid rows must produce a diagnostic, never a crash
+  // (review finding #3).
   for (const entry of entries) {
-    const row = `capability '${entry.capability}'`;
-    if (!entry.candidateUpstream.trim()) {
+    const row = `capability '${String(entry.capability ?? "")}'`;
+    if (!String(entry.candidateUpstream ?? "").trim()) {
       problems.push(`${row}: missing upstream`);
     }
-    if (!entry.license.trim()) {
+    if (!String(entry.license ?? "").trim()) {
       problems.push(`${row}: missing license`);
     }
-    if (!entry.integrationMode.trim()) {
+    if (!String(entry.integrationMode ?? "").trim()) {
       problems.push(`${row}: missing integration mode`);
     }
     if (!DECISIONS.includes(entry.decision)) {
-      problems.push(`${row}: invalid decision '${entry.decision}'`);
+      problems.push(`${row}: invalid decision '${String(entry.decision)}'`);
     }
-    if (!entry.starsDateChecked.trim()) {
+    if (!String(entry.starsDateChecked ?? "").trim()) {
       problems.push(`${row}: missing stars/date check`);
     }
-    if (!entry.existingDshOverlap.trim()) {
+    if (!String(entry.existingDshOverlap ?? "").trim()) {
       problems.push(`${row}: missing existing DSH overlap note`);
     }
-    if (!entry.risk.trim()) {
+    if (!String(entry.risk ?? "").trim()) {
       problems.push(`${row}: missing risk note`);
     }
   }
 
   // 3. Copyleft upstreams must be adapter/provider — never source copying.
   for (const entry of entries) {
-    const licenseUpper = entry.license.toUpperCase();
+    const licenseUpper = String(entry.license ?? "").toUpperCase();
     if (COPYLEFT_LICENSES.some((l) => licenseUpper.includes(l))) {
       const mode = entry.integrationMode.toLowerCase();
       const adapterSafe =
@@ -137,7 +171,7 @@ export function validateEcosystemMatrix(
   // 4. Upstreams without an explicit license must not be vendored.
   for (const entry of entries) {
     if (NO_VENDOR_UNLESS_EXPLICIT.includes(entry.capability)) {
-      const explicit = !/^(unclear|unknown|none|tbd|n\/a)$/i.test(entry.license);
+      const explicit = isExplicitLicense(String(entry.license ?? ""));
       if (!explicit && entry.decision !== "DO NOT BUILD") {
         problems.push(
           `capability '${entry.capability}': license '${entry.license}' is not explicit; decision must be DO NOT BUILD (no vendoring)`,
