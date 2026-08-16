@@ -379,4 +379,8 @@ export const voicePlugin: Plugin = {
   ],
 };
 
+// Public API: expose the authorized-reference lookup so other creator
+// plugins (e.g. creator-localize dubbing) can enforce the voice policy.
+export { getReference, listReferences } from "./registry.js";
+
 export default voicePlugin;

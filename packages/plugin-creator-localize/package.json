@@ -1,0 +1,19 @@
+{
+  "name": "@dsh-forge-creator/plugin-creator-localize",
+  "version": "0.1.0",
+  "description": "Subtitle & video localization workflow: translate/align/resegment subtitles, localize video, and dub (passing the voice policy); mock + VideoLingo-compatible external adapter (no vendoring)",
+  "license": "MIT",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean"
+  },
+  "dependencies": {
+    "@dsh-forge-creator/core": "workspace:*",
+    "@dsh-forge-creator/plugin-creator-voice": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0"
+  }
+}
