@@ -1,0 +1,202 @@
+[
+  {
+    "capability": "creator-radar",
+    "existingDshOverlap": "none in this repo; DeepSeek Harness has generic web search, not a creator topic radar",
+    "candidateUpstream": "sansan0/TrendRadar",
+    "starsDateChecked": "61,488 stars, checked 2026-08-16",
+    "license": "GPL-3.0",
+    "integrationMode": "provider-compatible adapter (MCP/HTTP/RSS); external service; NO source copying (GPL-3.0)",
+    "decision": "BUILD",
+    "risk": "GPL-3.0 forces adapter-only; TrendRadar offers MCP/API integration so we consume data, never copy code; also support RSS-compatible + Mock providers"
+  },
+  {
+    "capability": "creator-capture",
+    "existingDshOverlap": "none in this repo",
+    "candidateUpstream": "yt-dlp/yt-dlp",
+    "starsDateChecked": "184,678 stars, checked 2026-08-16",
+    "license": "Unlicense",
+    "integrationMode": "external CLI binary provider (argv[], never shell strings); no source vendoring",
+    "decision": "BUILD",
+    "risk": "download side effects + rights policy required; strict workspace + rights guard; no DRM bypass; huge playlist limits"
+  },
+  {
+    "capability": "creator-transcribe",
+    "existingDshOverlap": "none in this repo (generic one-shot STT is out of scope, this is creator-grade)",
+    "candidateUpstream": "openai/whisper",
+    "starsDateChecked": "107,338 stars, checked 2026-08-16",
+    "license": "MIT",
+    "integrationMode": "external model/binary provider (Whisper-compatible; faster-whisper swappable); no source vendoring",
+    "decision": "BUILD",
+    "risk": "large media resource limits; deterministic fixtures required; provider-unavailable diagnostics"
+  },
+  {
+    "capability": "creator-clips",
+    "existingDshOverlap": "existing dsh-forge plugin-ffmpeg adapter (MIT); DeepSeek Harness ecosystem",
+    "candidateUpstream": "existing ffmpeg adapter (dsh-forge)",
+    "starsDateChecked": "n/a — in-repo/existing adapter, checked 2026-08-16",
+    "license": "MIT",
+    "integrationMode": "REUSE existing ffmpeg adapter via core provider; no re-implementation of an FFmpeg wrapper",
+    "decision": "BUILD",
+    "risk": "must not re-wrap FFmpeg; only high-level workflow tools; validate time ranges/durations/ratios"
+  },
+  {
+    "capability": "creator-short-video",
+    "existingDshOverlap": "none in this repo",
+    "candidateUpstream": "harry0703/MoneyPrinterTurbo",
+    "starsDateChecked": "103,987 stars, checked 2026-08-16",
+    "license": "MIT",
+    "integrationMode": "provider-compatible adapter (plan/generate/status) + MockShortVideoProvider; no vendoring",
+    "decision": "BUILD",
+    "risk": "do not vendor upstream app source; plan-before-generate contract; aspect-ratio/duration validation"
+  },
+  {
+    "capability": "creator-cover",
+    "existingDshOverlap": "generic image generation exists in DeepSeek Harness ecosystem; platform-ready covers do not",
+    "candidateUpstream": "comfyanonymous/ComfyUI",
+    "starsDateChecked": "127,798 stars, checked 2026-08-16",
+    "license": "GPL-3.0",
+    "integrationMode": "HTTP/API adapter to external service (optional provider); NO source copying (GPL-3.0)",
+    "decision": "BUILD",
+    "risk": "GPL-3.0 forces external-service adapter; local deterministic layout provider for CI"
+  },
+  {
+    "capability": "creator-voice",
+    "existingDshOverlap": "generic TTS may exist in DSH ecosystem; authorized voice clone does not",
+    "candidateUpstream": "myshell-ai/OpenVoice",
+    "starsDateChecked": "37,148 stars, checked 2026-08-16",
+    "license": "MIT",
+    "integrationMode": "provider (OpenVoice-compatible) + mock; no source vendoring",
+    "decision": "BUILD",
+    "risk": "authorization-gated voice clone; no biometrics storage; CI uses synthetic/own fixtures only"
+  },
+  {
+    "capability": "creator-localize",
+    "existingDshOverlap": "none in this repo",
+    "candidateUpstream": "Huanshere/VideoLingo",
+    "starsDateChecked": "18,150 stars, checked 2026-08-16",
+    "license": "Apache-2.0",
+    "integrationMode": "provider-compatible adapter (translate/align/resegment) + mock; no source vendoring",
+    "decision": "BUILD",
+    "risk": "Apache-2.0 allows reference but we keep adapter/provider boundary; dubbing must pass voice policy"
+  },
+  {
+    "capability": "creator-motion",
+    "existingDshOverlap": "none in this repo",
+    "candidateUpstream": "remotion-dev/remotion",
+    "starsDateChecked": "56,421 stars, checked 2026-08-16",
+    "license": "Remotion License (custom, NOASSERTION)",
+    "integrationMode": "generic HTTP/command provider interface only; license gate documented; NO vendoring",
+    "decision": "BUILD",
+    "risk": "custom license (free for individuals, paid for companies) — must not vendor; template metadata + deterministic mock renderer for CI"
+  },
+  {
+    "capability": "creator-publish",
+    "existingDshOverlap": "none in this repo; ad-hoc article publish exists in DSH ecosystem but not controlled multi-platform publish",
+    "candidateUpstream": "gitroomhq/postiz-app; dreammis/social-auto-upload",
+    "starsDateChecked": "34,710 / 14,251 stars, checked 2026-08-16",
+    "license": "AGPL-3.0 / none (social-auto-upload)",
+    "integrationMode": "API adapter for Postiz (AGPL, external service); LocalAutomationProvider for CN platforms; NEVER vendor social-auto-upload (no license)",
+    "decision": "BUILD",
+    "risk": "highest-risk plugin: approval-gated publish state machine; idempotency; dry-run; CI mock-only"
+  },
+  {
+    "capability": "rsshub",
+    "existingDshOverlap": "none in this repo (RSS feed consumption used by creator-radar)",
+    "candidateUpstream": "DIYgod/RSSHub",
+    "starsDateChecked": "45,751 stars, checked 2026-08-16",
+    "license": "AGPL-3.0",
+    "integrationMode": "HTTP feed consumption (external service); NO source copying (AGPL-3.0)",
+    "decision": "INTEGRATE",
+    "risk": "AGPL-3.0 — consume over HTTP only; treat feeds as data, never vendor code"
+  },
+  {
+    "capability": "losslesscut",
+    "existingDshOverlap": "existing ffmpeg adapter covers lossless cutting for creator-clips",
+    "candidateUpstream": "mifi/lossless-cut",
+    "starsDateChecked": "42,952 stars, checked 2026-08-16",
+    "license": "GPL-2.0",
+    "integrationMode": "none — creator-clips reuses the ffmpeg adapter instead",
+    "decision": "DO NOT BUILD",
+    "risk": "GPL-2.0; GUI app; capability already covered by ffmpeg adapter — no need"
+  },
+  {
+    "capability": "openbiliclaw",
+    "existingDshOverlap": "whiteguo233/dsh-openbiliclaw DSH plugin exists (BSD-3-Clause)",
+    "candidateUpstream": "whiteguo233/OpenBiliClaw",
+    "starsDateChecked": "2,603 stars, checked 2026-08-16",
+    "license": "MIT",
+    "integrationMode": "none — pure cross-platform content discovery is out of Creator Pack scope",
+    "decision": "DO NOT BUILD",
+    "risk": "out of scope (content discovery, not production tooling); existing DSH plugin covers it"
+  },
+  {
+    "capability": "picgo",
+    "existingDshOverlap": "generic image upload already exists in DSH ecosystem (PicGo DSH plugin)",
+    "candidateUpstream": "Molunerfinn/PicGo",
+    "starsDateChecked": "26,986 stars, checked 2026-08-16",
+    "license": "MIT",
+    "integrationMode": "none — generic image upload is out of Creator Pack scope",
+    "decision": "DO NOT BUILD",
+    "risk": "out of scope (taskbook: no ordinary image-hosting rebuild); reuse ecosystem upload"
+  },
+  {
+    "capability": "social-auto-upload",
+    "existingDshOverlap": "none in this repo",
+    "candidateUpstream": "dreammis/social-auto-upload",
+    "starsDateChecked": "14,251 stars, checked 2026-08-16",
+    "license": "none (no license file; not explicit)",
+    "integrationMode": "none — no explicit license, must not vendor; publish automation is adapter/provider-only (LocalAutomationProvider), never copied",
+    "decision": "DO NOT BUILD",
+    "risk": "NO explicit license → vendoring forbidden; even partial copy is out; only reference its behavior via adapter"
+  },
+  {
+    "capability": "dsh-web-search",
+    "existingDshOverlap": "DeepSeek Harness web capability provides generic web search",
+    "candidateUpstream": "DeepSeek Harness web capability (dsh web)",
+    "starsDateChecked": "n/a — DSH ecosystem capability, checked 2026-08-16",
+    "license": "n/a (DSH ecosystem capability)",
+    "integrationMode": "none — generic web search is out of Creator Pack scope; reuse existing capability",
+    "decision": "DO NOT BUILD",
+    "risk": "out of scope (taskbook: no generic web search rebuild)"
+  },
+  {
+    "capability": "dsh-news-briefing",
+    "existingDshOverlap": "DeepSeek Harness ecosystem has news/briefing tooling",
+    "candidateUpstream": "DeepSeek Harness ecosystem (news/briefing)",
+    "starsDateChecked": "n/a — DSH ecosystem capability, checked 2026-08-16",
+    "license": "n/a (DSH ecosystem capability)",
+    "integrationMode": "none — generic news briefing is out of Creator Pack scope",
+    "decision": "DO NOT BUILD",
+    "risk": "out of scope (taskbook: no generic news briefing rebuild)"
+  },
+  {
+    "capability": "dsh-media-crawler",
+    "existingDshOverlap": "DeepSeek Harness ecosystem has media crawling tooling",
+    "candidateUpstream": "DeepSeek Harness ecosystem (media crawler)",
+    "starsDateChecked": "n/a — DSH ecosystem capability, checked 2026-08-16",
+    "license": "n/a (DSH ecosystem capability)",
+    "integrationMode": "none — generic media crawling is out of Creator Pack scope",
+    "decision": "DO NOT BUILD",
+    "risk": "out of scope (taskbook: no generic media crawler rebuild)"
+  },
+  {
+    "capability": "dsh-article-publish",
+    "existingDshOverlap": "DeepSeek Harness ecosystem has article-publish tooling",
+    "candidateUpstream": "DeepSeek Harness ecosystem (article publish)",
+    "starsDateChecked": "n/a — DSH ecosystem capability, checked 2026-08-16",
+    "license": "n/a (DSH ecosystem capability)",
+    "integrationMode": "none — superseded by creator-publish with controlled approval flow",
+    "decision": "DO NOT BUILD",
+    "risk": "covered by creator-publish; must never bypass the approval state machine"
+  },
+  {
+    "capability": "ffmpeg",
+    "existingDshOverlap": "existing dsh-forge plugin-ffmpeg adapter (MIT) — the taskbook mandates creator-clips reuses it",
+    "candidateUpstream": "existing dsh-forge plugin-ffmpeg (MIT)",
+    "starsDateChecked": "n/a — existing adapter, checked 2026-08-16",
+    "license": "MIT",
+    "integrationMode": "REUSE existing ffmpeg adapter through the core provider; creator-clips adds workflow-level tools only",
+    "decision": "REUSE",
+    "risk": "no second FFmpeg wrapper; no free-form ffmpeg param strings"
+  }
+]
