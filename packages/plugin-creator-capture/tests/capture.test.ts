@@ -3,12 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { capturePlugin } from "@dsh-forge-creator/plugin-creator-capture";
-import {
-  buildDownloadArgv,
-  buildInspectArgv,
-  buildFormatsArgv,
-  buildPlaylistArgv,
-} from "../src/argv.js";
+import { buildDownloadArgv, buildPlaylistArgv } from "../src/argv.js";
 import {
   runContractSuite,
   assertRightsPolicy,
@@ -18,7 +13,6 @@ import {
   type ExecutionResult,
   type ToolContext,
   type CreatorAsset,
-  type RightsMetadata,
 } from "@dsh-forge-creator/core";
 
 let workspaceRoot: string;
@@ -171,6 +165,7 @@ describe("contract suite (CREATOR-005)", () => {
     const report = await runContractSuite(capturePlugin, {
       workspaceRoot,
       missingBinaryTool: "media_inspect",
+      missingBinaryToolArgs: { sourceUrl: "https://example.invalid/v" },
       runner: async () => OK,
       toolArgs: {
         media_inspect: {
@@ -232,10 +227,15 @@ describe("contract suite (CREATOR-005)", () => {
         },
       },
     });
-    expect(report.passed).toBe(true);
     if (!report.passed) {
       const failed = report.checks.filter((c) => !c.passed);
-      process.stderr.write(JSON.stringify(failed, null, 2) + "\n");
+      expect(
+        report.passed,
+        "failed checks:\n" +
+          failed.map((c) => `- ${c.name} :: ${c.detail ?? ""}`).join("\n"),
+      ).toBe(true);
+    } else {
+      expect(report.passed).toBe(true);
     }
   });
 });

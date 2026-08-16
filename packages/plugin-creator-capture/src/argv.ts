@@ -1,34 +1,93 @@
 /**
  * creator-capture argv builders (CREATOR-005).
  *
- * RED: builders are stubs — they throw "not implemented". Tests are failing.
- * GREEN emits typed argv[] only (never a shell string), reads only known
- * fields, and encodes the explicit conflict policy + playlist limit.
+ * GREEN: typed argv[] only (never a shell string). Only known spec fields are
+ * read — arbitrary extra args can never reach the generated argv. Conflict
+ * policy and playlist limit are encoded explicitly.
  */
-import type { DownloadSpec } from "./types.js";
+import { join } from "node:path";
+import type { CaptureKind, ConflictPolicy, DownloadSpec } from "./types.js";
 
-export type ArgvResult = { ok: true; argv: string[] } | { ok: false; errors: string[] };
+export type ArgvResult =
+  | { ok: true; argv: string[] }
+  | { ok: false; errors: string[] };
 
-function notImplemented(name: string): never {
-  throw new Error(`not implemented: ${name}`);
+const KINDS: readonly CaptureKind[] = [
+  "media",
+  "audio",
+  "subtitle",
+  "thumbnail",
+];
+const CONFLICTS: readonly ConflictPolicy[] = [
+  "fail",
+  "rename",
+  "overwrite-approved",
+];
+
+function validateDownloadSpec(spec: DownloadSpec): string[] {
+  const errors: string[] = [];
+  if (typeof spec.sourceUrl !== "string" || spec.sourceUrl.trim() === "") {
+    errors.push("sourceUrl is required");
+  }
+  if (typeof spec.outputPath !== "string" || spec.outputPath.trim() === "") {
+    errors.push("outputPath is required");
+  }
+  if (!KINDS.includes(spec.kind)) {
+    errors.push(`invalid kind: ${String(spec.kind)}`);
+  }
+  if (!CONFLICTS.includes(spec.conflict)) {
+    errors.push(`invalid conflict: ${String(spec.conflict)}`);
+  }
+  return errors;
 }
 
 /**
  * Build the typed argv[] for a download. Rejects unknown kinds/conflicts,
  * never appends arbitrary extra args, and encodes the conflict policy.
  */
-export function buildDownloadArgv(_spec: DownloadSpec): ArgvResult {
-  return notImplemented("buildDownloadArgv");
+export function buildDownloadArgv(spec: DownloadSpec): ArgvResult {
+  const errors = validateDownloadSpec(spec);
+  if (errors.length > 0) return { ok: false, errors };
+  const argv: string[] = [spec.sourceUrl];
+  argv.push("-o", spec.outputPath);
+  switch (spec.conflict) {
+    case "fail":
+    case "rename":
+      argv.push("--no-overwrites");
+      break;
+    case "overwrite-approved":
+      argv.push("--force-overwrites");
+      break;
+  }
+  if (spec.kind === "audio") {
+    argv.push("-x", "--audio-format", spec.format ?? "mp3");
+  } else if (spec.kind === "subtitle") {
+    argv.push(
+      "--write-subs",
+      "--sub-lang",
+      spec.subtitleLang ?? "en",
+      "--skip-download",
+    );
+  } else if (spec.kind === "thumbnail") {
+    argv.push("--write-thumbnail", "--skip-download");
+  } else if (spec.format) {
+    argv.push("--format", spec.format);
+  }
+  if (spec.playlistLimit !== undefined && spec.playlistLimit > 0) {
+    argv.push("--playlist-items", `1-${spec.playlistLimit}`);
+  }
+  argv.push("--no-playlist");
+  return { ok: true, argv };
 }
 
 /** Build the typed argv[] for `media_inspect` (yt-dlp -J). */
-export function buildInspectArgv(_sourceUrl: string): string[] {
-  return notImplemented("buildInspectArgv");
+export function buildInspectArgv(sourceUrl: string): string[] {
+  return [sourceUrl, "-J", "--no-playlist"];
 }
 
-/** Build the typed argv[] for `media_formats` (yt-dlp -J --list-formats). */
-export function buildFormatsArgv(_sourceUrl: string): string[] {
-  return notImplemented("buildFormatsArgv");
+/** Build the typed argv[] for `media_formats` (yt-dlp -F). */
+export function buildFormatsArgv(sourceUrl: string): string[] {
+  return [sourceUrl, "-F", "--no-playlist"];
 }
 
 /**
@@ -36,10 +95,22 @@ export function buildFormatsArgv(_sourceUrl: string): string[] {
  * (flat playlist, bounded by the playlist limit).
  */
 export function buildPlaylistArgv(
-  _sourceUrl: string,
-  _outputPath: string,
-  _limit?: number,
-  _download = false,
+  sourceUrl: string,
+  outputPath: string,
+  limit?: number,
+  download = false,
 ): string[] {
-  return notImplemented("buildPlaylistArgv");
+  const argv: string[] = [sourceUrl];
+  if (download) {
+    // Static yt-dlp output template; the directory is workspace-canonicalized
+    // by the caller. yt-dlp sanitizes filenames derived from media metadata.
+    argv.push("-o", join(outputPath, "%(playlist_index)s-%(title)s.%(ext)s"));
+  }
+  if (limit !== undefined && limit > 0) {
+    argv.push("--playlist-items", `1-${limit}`);
+  }
+  argv.push("--flat-playlist");
+  if (!download) argv.push("-J");
+  return argv;
 }
+

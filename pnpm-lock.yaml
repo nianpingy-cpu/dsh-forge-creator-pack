@@ -11,6 +11,9 @@ importers:
       '@dsh-forge-creator/core':
         specifier: workspace:*
         version: link:packages/core
+      '@dsh-forge-creator/plugin-creator-capture':
+        specifier: workspace:*
+        version: link:packages/plugin-creator-capture
       '@dsh-forge-creator/plugin-creator-radar':
         specifier: workspace:*
         version: link:packages/plugin-creator-radar
@@ -46,6 +49,16 @@ importers:
         version: 3.2.7(@types/node@24.13.3)
 
   packages/core:
+    devDependencies:
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(postcss@8.5.26)(typescript@5.9.3)
+
+  packages/plugin-creator-capture:
+    dependencies:
+      '@dsh-forge-creator/core':
+        specifier: workspace:*
+        version: link:../core
     devDependencies:
       tsup:
         specifier: ^8.5.0

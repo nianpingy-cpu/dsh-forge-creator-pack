@@ -28,6 +28,7 @@ import {
   type ExecutionResult,
   type CreatorAsset,
   type RightsMetadata,
+  type InputSchema,
   assertRightsPolicy,
   assertNoBypassFlags,
   assertCreatorAssetInWorkspace,
@@ -80,9 +81,33 @@ function validate(
   return null;
 }
 
-function errorCodeOf(err: unknown, fallback: string): string {
+type ToolErrorCode = NonNullable<ToolResult["error"]>["code"];
+
+/**
+ * Map a CreatorError code to the ToolError code union. Creator-domain codes
+ * (CREATOR_*) are normalized to the tool surface's error vocabulary so the
+ * model sees a stable, typed error.
+ */
+function mapToolErrorCode(code: string): ToolErrorCode {
+  switch (code) {
+    case "CREATOR_OUTPUT_OUTSIDE_WORKSPACE":
+      return "WorkspaceViolation";
+    case "CREATOR_APPROVAL_REQUIRED":
+    case "CREATOR_APPROVAL_EXPIRED":
+      return "PermissionDenied";
+    case "CREATOR_RIGHTS_REQUIRED":
+    case "CREATOR_CREDENTIAL_LEAK":
+    case "CREATOR_RESOURCE_LIMIT_EXCEEDED":
+    case "CREATOR_UNSUPPORTED_CAPABILITY":
+    case "CREATOR_VOICE_AUTHORIZATION_REQUIRED":
+    default:
+      return "ToolFailure";
+  }
+}
+
+function errorCodeOf(err: unknown, fallback: ToolErrorCode): ToolErrorCode {
   const code = (err as { code?: unknown })?.code;
-  return typeof code === "string" ? code : fallback;
+  return typeof code === "string" ? mapToolErrorCode(code) : fallback;
 }
 
 function errorMessageOf(err: unknown, fallback: string): string {
@@ -332,7 +357,9 @@ async function runInspect(
   return success("inspection ok", { stdout: exec.stdout.slice(0, 50_000) });
 }
 
-const baseDownloadProps: Record<string, unknown> = {
+type PropertySpec = NonNullable<InputSchema["properties"][string]>;
+
+const baseDownloadProps: Record<string, PropertySpec> = {
   sourceUrl: { type: "string", description: "media source URL" },
   outputPath: { type: "string", description: "workspace output path" },
   rights: {
@@ -360,7 +387,7 @@ function makeDownloadTool(
   kind: CaptureKind,
   name: string,
   description: string,
-  extraProps: Record<string, unknown> = {},
+  extraProps: Record<string, PropertySpec> = {},
   extraRequired: string[] = [],
 ): ToolDefinition {
   const schema: ToolDefinition["inputSchema"] = {
