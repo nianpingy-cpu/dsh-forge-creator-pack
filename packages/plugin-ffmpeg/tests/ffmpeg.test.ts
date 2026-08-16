@@ -27,7 +27,7 @@ import {
 } from "@dsh-forge-creator/core";
 
 const FIXTURES = fileURLToPath(
-  new URL("../../../fixtures/ffmpeg", import.meta.url),
+  new URL("./fixtures/ffmpeg", import.meta.url),
 );
 
 let workspaceRoot: string;
@@ -746,7 +746,7 @@ describe("creator-pack additions (video_vertical / video_square / silence_remove
 
 describe("live ffmpeg (opt-in)", () => {
   // Real-binary integration: these run the actual upstream ffmpeg/ffprobe
-  // against the committed fixtures (fixtures/ffmpeg/tiny.wav + tiny.mp4).
+  // against the committed fixtures (tests/fixtures/ffmpeg/tiny.wav + tiny.mp4).
   // CI installs ffmpeg so they execute there; locally they skip when the
   // binaries are not on PATH.
   const live = hasRealFfmpeg && hasRealFfprobe;
