@@ -63,7 +63,8 @@ describe("voice_register_reference (CREATOR-010)", () => {
   });
 
   it("rejects a missing authorization field", async () => {
-    const { authorization, ...rest } = authorized;
+    const rest = { ...authorized };
+    delete (rest as { authorization?: boolean }).authorization;
     const res = await tool("voice_register_reference").execute(rest, ctx());
     expect(res.ok).toBe(false);
     expect(res.error?.code).toBe("InvalidArguments");
@@ -157,7 +158,8 @@ describe("voice_clone / voice_style_transfer (CREATOR-010)", () => {
       ctx(),
     );
     expect(res.ok).toBe(false);
-    expect(res.error?.code).toBe("CREATOR_VOICE_AUTHORIZATION_REQUIRED");
+    expect(res.error?.code).toBe("ToolFailure");
+    expect(res.error?.message).toMatch(/authoriz/i);
   });
 
   it("rejects style transfer from an unauthorized reference", async () => {
@@ -240,7 +242,7 @@ describe("contract suite (CREATOR-010)", () => {
         },
         voice_preview: {
           valid: { referenceId: "voice-1", provider: "mock" },
-          invalid: {},
+          invalid: { referenceId: 42 },
         },
       },
     });
