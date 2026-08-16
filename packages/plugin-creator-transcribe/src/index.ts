@@ -253,17 +253,23 @@ async function transcribeFlow(
       parsed = JSON.parse(exec.stdout) as typeof parsed;
     } catch {
       // openai-whisper prints human-readable text to stdout and writes the
-      // structured JSON to `<audio>.json` next to the input; fall back to
-      // that sidecar file when stdout is not JSON.
+      // structured JSON to a sidecar file next to the input; fall back to
+      // that file when stdout is not JSON. openai-whisper names it
+      // `<basename-without-ext>.json` (in cwd / --output_dir); some
+      // whisper-compatible CLIs keep the full `<audio>.json` name, so try
+      // both.
+      const audioStem = guarded.canonical.replace(/\.[^/.]+$/, "");
+      const candidates = [`${guarded.canonical}.json`, `${audioStem}.json`];
       try {
         parsed = JSON.parse(
-          readFileSync(`${guarded.canonical}.json`, "utf8"),
+          readFileSync(candidates.find((p) => existsSync(p)) ?? candidates[0]!, "utf8"),
         ) as typeof parsed;
       } catch {
         return toolFailure("whisper returned malformed JSON output");
       }
     }
-    const raw = (parsed.segments ?? []).map((s, i) => ({
+    const segs = Array.isArray(parsed?.segments) ? parsed.segments : [];
+    const raw = segs.map((s, i) => ({
       id: i,
       startMs: Math.round(s.start * 1000),
       endMs: Math.round(s.end * 1000),

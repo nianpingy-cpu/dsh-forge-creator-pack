@@ -133,7 +133,10 @@ describe("subtitle rendering (CREATOR-006)", () => {
         id: 0,
         startMs: 0,
         endMs: 1000,
-        text: "NOTE injected note\nSTYLE ::cue { color: red }",
+        // A blank line terminates the cue and lets the following "NOTE ..."
+        // lines open a VTT NOTE block (and STYLE a ::cue block) — the real
+        // WebVTT injection vector.
+        text: "cue text\n\nNOTE spoofed block\nSTYLE ::cue { color: red }",
       },
     ];
     const vtt = toVtt(evil);
@@ -278,15 +281,11 @@ describe("whisper integration path (CREATOR-006)", () => {
     expect(normalizeSegments(t.segments).ok).toBe(true);
   });
 
-  it("falls back to the <audio>.json sidecar when stdout is not JSON", async () => {
+  it("falls back to the sidecar file (openai-whisper naming) when stdout is not JSON", async () => {
     writeFileSync(join(workspaceRoot, "w2.wav"), generateToneWav(0.2, 8000));
-    // openai-whisper writes structured JSON to <audio>.json and prints
-    // human-readable text to stdout.
-    writeFileSync(
-      join(workspaceRoot, "w2.wav.json"),
-      whisperJson,
-      "utf8",
-    );
+    // openai-whisper prints human-readable text to stdout and writes the
+    // structured JSON to <basename-without-ext>.json in the cwd.
+    writeFileSync(join(workspaceRoot, "w2.json"), whisperJson, "utf8");
     const res = await tool("transcribe_media").execute(
       { audio: "w2.wav", provider: "whisper" },
       whisperCtx({ stdout: "hello world\nsecond segment\n" }),
@@ -297,6 +296,32 @@ describe("whisper integration path (CREATOR-006)", () => {
       "hello world",
       "second segment",
     ]);
+  });
+
+  it("also falls back to a <audio>.json sidecar for whisper-compatible CLIs", async () => {
+    writeFileSync(join(workspaceRoot, "w2b.wav"), generateToneWav(0.2, 8000));
+    writeFileSync(
+      join(workspaceRoot, "w2b.wav.json"),
+      whisperJson,
+      "utf8",
+    );
+    const res = await tool("transcribe_media").execute(
+      { audio: "w2b.wav", provider: "whisper" },
+      whisperCtx({ stdout: "human readable\n" }),
+    );
+    expect(res.ok).toBe(true);
+  });
+
+  it("treats JSON with an unexpected shape as an empty transcript, not a crash", async () => {
+    writeFileSync(join(workspaceRoot, "w6.wav"), generateToneWav(0.2, 8000));
+    // JSON parses but is not an object with a segments array (e.g. `null`).
+    const res = await tool("transcribe_media").execute(
+      { audio: "w6.wav", provider: "whisper" },
+      whisperCtx({ stdout: "null" }),
+    );
+    expect(res.ok).toBe(true);
+    const t = JSON.parse(res.raw!) as Transcript;
+    expect(t.segments).toEqual([]);
   });
 
   it("returns a typed failure when whisper output is malformed", async () => {
