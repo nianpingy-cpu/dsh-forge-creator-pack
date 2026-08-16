@@ -1,8 +1,8 @@
 # PROJECT_STATUS
 
 Current Version: 0.1.0 (bootstrap — no tag yet)
-Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-008)
-Current Issue: CREATOR-008 MERGED — creator-short-video (PR #16)
+Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-009)
+Current Issue: CREATOR-009 MERGED — creator-cover (PR #18)
 
 ## Completed (merged + closed with evidence)
 
@@ -60,10 +60,17 @@ Current Issue: CREATOR-008 MERGED — creator-short-video (PR #16)
   typed Timeout, workspace-bounded outputDir, no external-URL/credential leak.
   20 tests. External review APPROVE (1 round + NB cleanup: dead code removed,
   permission-denied test added).
+- **CREATOR-009 creator-cover** (PR #18): 7 tools (cover_generate_background …
+  cover_validate), centralized platform profiles (6 platforms with source
+  notes), LocalLayoutProvider (overflow / safe-area / font-fallback), mock
+  background with dimension recording, optional ComfyUI external HTTP/API
+  adapter (GPL-3.0, no vendoring, unconfigured -> typed ToolFailure),
+  cover_variants -> validate -> CreatorAsset[] acceptance. 21 tests. External
+  review APPROVE (1 round + NB cleanup: background default derived from
+  profile, store keying documented).
 
 ## In progress / planned
 
-- CREATOR-009 creator-cover
 - CREATOR-010 creator-voice
 - CREATOR-011 creator-localize
 - CREATOR-012 creator-motion
