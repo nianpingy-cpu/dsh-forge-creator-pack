@@ -27,6 +27,7 @@
     "@dsh-forge-creator/plugin-creator-short-video": "workspace:*",
     "@dsh-forge-creator/plugin-creator-cover": "workspace:*",
     "@dsh-forge-creator/plugin-creator-voice": "workspace:*",
+    "@dsh-forge-creator/plugin-creator-localize": "workspace:*",
     "@dsh-forge-creator/plugin-creator-radar": "workspace:*",
     "@dsh-forge-creator/plugin-creator-capture": "workspace:*",
     "@dsh-forge-creator/plugin-creator-transcribe": "workspace:*",
