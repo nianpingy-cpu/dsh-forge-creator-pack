@@ -24,6 +24,7 @@
     "@dsh-forge-creator/core": "workspace:*",
     "@dsh-forge-creator/plugin-creator-radar": "workspace:*",
     "@dsh-forge-creator/plugin-creator-capture": "workspace:*",
+    "@dsh-forge-creator/plugin-creator-transcribe": "workspace:*",
     "@eslint/js": "^9.30.0",
     "@types/estree": "^1.0.7",
     "@types/node": "^24.13.3",
