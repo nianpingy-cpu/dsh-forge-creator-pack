@@ -62,6 +62,10 @@ function resolveWorkspacePath(
   path: string,
 ): { ok: true; canonical: string } | { ok: false; result: ToolResult } {
   try {
+    // NOTE: the canonical path is validated here (realpath-safe, no `..`).
+    // A future real Remotion-compatible renderer that writes output MUST bind
+    // its writes to this canonical path (not the raw path) to close the
+    // check-then-use/symlink-swap gap; the current mock only returns metadata.
     const canonical = assertCreatorAssetInWorkspace(
       { path } as CreatorAsset,
       ctx.workspaceRoot,
