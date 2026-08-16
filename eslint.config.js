@@ -286,6 +286,10 @@ export default tseslint.config(
     },
     rules: {
       "dsh-forge/no-shell-exec": "error",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_" },
+      ],
     },
   },
 );
