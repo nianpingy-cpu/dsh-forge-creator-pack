@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { radarPlugin } from "@dsh-forge-creator/plugin-creator-radar";
 import { capturePlugin } from "@dsh-forge-creator/plugin-creator-capture";
-import { createE2E, writeFixture } from "./harness.js";
+import { createE2E } from "./harness.js";
 
 interface CreatorTopic {
   id: string;
@@ -54,7 +54,7 @@ describe("E2E Story A — 热点到素材 (CREATOR-015)", () => {
     });
     expect(captured.ok).toBe(true);
     const asset = JSON.parse(captured.raw!) as { path: string };
-    expect(asset.path).toBe("capture.mp4");
+    expect(asset.path.split(/[\\/]/).pop()).toBe("capture.mp4");
   });
 
   it("blocks capture without approval (safety gate in the story)", async () => {

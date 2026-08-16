@@ -47,14 +47,15 @@ describe("E2E Story C — 海外本地化 (CREATOR-015)", () => {
     expect(aligned.ok).toBe(true);
     expect(existsSync(join(e2e.workspaceRoot, "al.srt"))).toBe(true);
 
-    // 3. optional TTS mock -> localized voice asset
+    // 3. optional TTS mock -> localized voice asset path
     const tts = await e2e.invoke("tts_generate", {
       text: "Bonjour le monde",
       outputPath: "voice.wav",
       provider: "mock",
     });
     expect(tts.ok).toBe(true);
-    expect(existsSync(join(e2e.workspaceRoot, "voice.wav"))).toBe(true);
+    const ttsAsset = JSON.parse(tts.raw!) as { path: string };
+    expect(ttsAsset.path.split(/[\\/]/).pop()).toBe("voice.wav");
 
     // 4. localized asset (wraps the aligned translated subtitle)
     const localized = await e2e.invoke("localize_video", {

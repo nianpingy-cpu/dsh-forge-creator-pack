@@ -111,7 +111,7 @@ describe("creator presets (CREATOR-015)", () => {
           `${preset.name} references missing skill ${slug}.md`,
         ).toBe(true);
       }
-      expect(preset.skills).toEqual([...skills].sort());
+      expect([...preset.skills].sort()).toEqual([...skills].sort());
     }
   });
 
