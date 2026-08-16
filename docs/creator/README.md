@@ -8,6 +8,8 @@ Docs for the DSH Forge Creator Pack, built issue-by-issue.
   with integration-mode notes.
 - [BUILD_REUSE_DECISIONS.md](BUILD_REUSE_DECISIONS.md) — CREATOR-001: what we
   build, reuse, integrate or explicitly do not build.
+- [PRESETS.md](PRESETS.md) — CREATOR-015: the 4 composable presets and the 5
+  deterministic E2E stories.
 - [SAFETY.md](SAFETY.md) — planned (CREATOR-003 / CREATOR-016).
 - [PROVIDERS.md](PROVIDERS.md) — planned (CREATOR-016).
 - [EXAMPLES.md](EXAMPLES.md) — planned (CREATOR-016).
