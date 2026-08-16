@@ -2,7 +2,7 @@
 
 Current Version: 0.1.0 (bootstrap — no tag yet)
 Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-006)
-Current Issue: CREATOR-001 MERGED — Ecosystem & Overlap Lock (PR #2)
+Current Issue: CREATOR-002 MERGED — Creator Core Contracts (PR #4)
 
 ## Completed (merged + closed with evidence)
 
@@ -14,10 +14,15 @@ Current Issue: CREATOR-001 MERGED — Ecosystem & Overlap Lock (PR #2)
   BUILD_REUSE_DECISIONS, validator `scripts/creator-ecosystem-check.ts`,
   `tests/creator-ecosystem.test.ts` (11 tests), `creator-contract` CI job.
   External review APPROVE (2 rounds, no blocking findings).
+- **CREATOR-002 Creator Core Contracts** (PR #4): Creator Domain in
+  `@dsh-forge-creator/core` — `src/creator/{types,validate,errors,provider}` +
+  `index`; shared CreatorAsset / RightsMetadata / PlatformPostDraft /
+  PublishResult / CredentialRef / CreatorError / CreatorProvider contracts.
+  26 creator-contract tests. External review APPROVE (2 rounds, no blocking
+  findings).
 
 ## In progress / planned
 
-- CREATOR-002 Creator Core Contracts
 - CREATOR-003 Creator Safety Policy
 - CREATOR-004 creator-radar
 - CREATOR-005 creator-capture
