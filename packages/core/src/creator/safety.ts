@@ -6,8 +6,15 @@
  * policy, voice authorization guard, bypass-flag rejection and centralized
  * resource limits. Any plugin that declares a high-risk creator mutation
  * reuses these guards — no per-plugin reimplementation.
+ *
+ * SECURITY NOTE: approvals are minted by the DSH permission system, which is
+ * the authority holder. Plugins only CHECK approvals; `createApproval` is a
+ * test/dev helper and MUST NOT be reachable from untrusted input. There is no
+ * per-approval secret token here (an unverified token would be forgeable and
+ * give a false sense of security) — the meaningful bindings are scope,
+ * content hash and expiry. Idempotency / duplicate-side-effect protection is
+ * enforced by the publish layer (CREATOR-013) via CREATOR_DUPLICATE_SIDE_EFFECT_RISK.
  */
-import { randomBytes } from "node:crypto";
 import { resolveInWorkspace } from "../workspace/policy.js";
 import { creatorError } from "./errors.js";
 import { sanitizeCredentialText } from "./validate.js";
@@ -36,7 +43,6 @@ export const DEFAULT_MAX_BATCH_ITEMS = 50;
 export type CreatorApprovalScope = CreatorMutationClass | "all";
 
 export interface CreatorApproval {
-  token: string;
   contentHash: string;
   expiresAt: number;
   scope: CreatorApprovalScope;
@@ -45,7 +51,6 @@ export interface CreatorApproval {
 export interface CreatorApprovalOptions {
   /** Approval lifetime in ms (default 15 min). */
   ttlMs?: number;
-  token?: string;
 }
 
 export type RightsPolicy = "strict" | "permissive";
@@ -66,15 +71,21 @@ function throwSafetyError(code: CreatorError["code"], message: string): never {
   throw creatorError(code, message);
 }
 
-/** Create a time-boxed approval bound to a content hash. */
+/**
+ * Create a time-boxed approval bound to a content hash.
+ *
+ * DEV/TEST helper — in production approvals are minted by the DSH permission
+ * system. There is intentionally no secret token: the security boundary is
+ * that only the permission system mints approvals, and plugins only check
+ * scope / content-hash / expiry.
+ */
 export function createApproval(
   scope: CreatorApprovalScope,
   contentHash: string,
   options?: CreatorApprovalOptions,
 ): CreatorApproval {
   const ttlMs = options?.ttlMs ?? 15 * 60 * 1000;
-  const token = options?.token ?? randomBytes(16).toString("hex");
-  return { token, contentHash, expiresAt: Date.now() + ttlMs, scope };
+  return { contentHash, expiresAt: Date.now() + ttlMs, scope };
 }
 
 /**
@@ -99,6 +110,18 @@ export function assertCreatorApproval(
       `approval for '${approval.scope}' does not cover '${scope}'`,
     );
   }
+  // An "all" approval never authorizes the most sensitive mutations; those
+  // always require an explicit approval scoped to their own class.
+  if (
+    approval.scope === "all" &&
+    (scope === "creator-remote-destructive" ||
+      scope === "creator-voice-sensitive")
+  ) {
+    throwSafetyError(
+      "CREATOR_APPROVAL_REQUIRED",
+      `an 'all' approval does not cover '${scope}'; an explicit '${scope}' approval is required`,
+    );
+  }
   if (approval.contentHash !== contentHash) {
     throwSafetyError(
       "CREATOR_APPROVAL_REQUIRED",
@@ -110,11 +133,16 @@ export function assertCreatorApproval(
   }
 }
 
-/** Reject an asset whose path escapes the workspace. */
+/**
+ * Reject an asset whose path escapes the workspace.
+ *
+ * Returns the canonical (realpathed) path so callers can bind their write to
+ * the validated path and avoid a check-then-use (symlink-swap) gap.
+ */
 export function assertCreatorAssetInWorkspace(
   asset: CreatorAsset,
   workspaceRoot: string,
-): void {
+): string {
   if (!asset || typeof asset.path !== "string" || asset.path.trim() === "") {
     throwSafetyError(
       "CREATOR_OUTPUT_OUTSIDE_WORKSPACE",
@@ -122,7 +150,7 @@ export function assertCreatorAssetInWorkspace(
     );
   }
   try {
-    resolveInWorkspace(workspaceRoot, asset.path);
+    return resolveInWorkspace(workspaceRoot, asset.path);
   } catch {
     throwSafetyError(
       "CREATOR_OUTPUT_OUTSIDE_WORKSPACE",
@@ -157,7 +185,7 @@ export function assertVoiceAuthorization(
   if (!authorization || authorization.authorized !== true) {
     throwSafetyError(
       "CREATOR_VOICE_AUTHORIZATION_REQUIRED",
-      "voice cloning/transfer requires explicit authorization (authorization: true + note)",
+      "voice cloning/transfer requires explicit authorization (authorization: true)",
     );
   }
 }
@@ -167,23 +195,48 @@ const BYPASS_FLAG_KEYS = [
   "captchaBypass",
   "antiDetection",
   "browserFingerprintSpoof",
+  "bypassDrm",
+  "bypassCaptcha",
+  "disableCaptcha",
+  "stripWatermark",
+  "removeWatermark",
+  "ignoreCopyright",
   "drm_bypass",
   "captcha_bypass",
   "anti_detection",
+  "drm-bypass",
+  "captcha-bypass",
+  "anti-detection",
 ];
 
-/** Reject DRM-bypass / CAPTCHA-bypass / anti-detection flags. */
+/**
+ * Reject DRM-bypass / CAPTCHA-bypass / anti-detection flags, including
+ * nested occurrences. A denylist is a first line of defence — the real
+ * control is typed-argv allowlisting in each plugin (ADR-004), so tools must
+ * never pass arbitrary extra args through to a provider.
+ */
 export function assertNoBypassFlags(
   options: Record<string, unknown>,
 ): void {
   if (!options || typeof options !== "object") return;
-  for (const key of BYPASS_FLAG_KEYS) {
-    if (options[key]) {
+  walkBypassFlags(options, []);
+}
+
+function walkBypassFlags(value: unknown, path: string[]): void {
+  if (!value || typeof value !== "object") return;
+  if (Array.isArray(value)) {
+    for (const item of value) walkBypassFlags(item, path);
+    return;
+  }
+  for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+    const keyLower = key.toLowerCase();
+    if (BYPASS_FLAG_KEYS.some((k) => k.toLowerCase() === keyLower)) {
       throwSafetyError(
         "CREATOR_UNSUPPORTED_CAPABILITY",
-        `forbidden option: ${key} — DRM-bypass / CAPTCHA-bypass / anti-detection is not allowed`,
+        `forbidden option: ${[...path, key].join(".")} — DRM-bypass / CAPTCHA-bypass / anti-detection is not allowed`,
       );
     }
+    walkBypassFlags(child, [...path, key]);
   }
 }
 
@@ -191,11 +244,20 @@ export function assertNoBypassFlags(
  * Reject any result carrying a known credential in plaintext before it
  * reaches the model.
  */
+/** Stringify for scanning without throwing on circular/BigInt values. */
+function safeStringify(value: unknown): string {
+  try {
+    return JSON.stringify(value ?? null);
+  } catch {
+    return String(value);
+  }
+}
+
 export function assertNoCredentialPlaintext(
   result: unknown,
   secrets: readonly string[],
 ): void {
-  const text = JSON.stringify(result ?? null);
+  const text = safeStringify(result);
   for (const secret of secrets) {
     if (typeof secret === "string" && secret.length > 0 && text.includes(secret)) {
       throwSafetyError(
