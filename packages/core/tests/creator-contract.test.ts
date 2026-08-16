@@ -39,6 +39,14 @@ const baseAsset: CreatorAsset = {
   checksum: "abc123",
 };
 
+/** Narrow a validation result to its errors; throws when it is unexpectedly valid. */
+function errorsOf(
+  r: { ok: false; errors: string[] } | { ok: true },
+): string[] {
+  if (r.ok) throw new Error("expected validation to fail");
+  return r.errors;
+}
+
 describe("CreatorAsset validation (CREATOR-002)", () => {
   it("accepts a valid asset inside the workspace", () => {
     const r = validateCreatorAsset(baseAsset, workspaceRoot);
@@ -49,7 +57,7 @@ describe("CreatorAsset validation (CREATOR-002)", () => {
     const bad = { ...baseAsset, path: "../outside.mp4" };
     const r = validateCreatorAsset(bad, workspaceRoot);
     expect(r.ok).toBe(false);
-    expect(r.errors.join("\n")).toContain("workspace");
+    expect(errorsOf(r).join("\n")).toContain("workspace");
   });
 
   it("rejects an absolute path outside the workspace", () => {
@@ -63,7 +71,7 @@ describe("CreatorAsset validation (CREATOR-002)", () => {
     const bad = { ...baseAsset, checksum: "   " };
     const r = validateCreatorAsset(bad, workspaceRoot);
     expect(r.ok).toBe(false);
-    expect(r.errors.join("\n")).toContain("checksum");
+    expect(errorsOf(r).join("\n")).toContain("checksum");
   });
 
   it("rejects an unknown asset type", () => {
@@ -143,7 +151,7 @@ describe("PlatformPostDraft (CREATOR-002)", () => {
     };
     const r = validatePlatformPostDraft(bad, workspaceRoot);
     expect(r.ok).toBe(false);
-    expect(r.errors.join("\n")).toContain("media");
+    expect(errorsOf(r).join("\n")).toContain("media");
   });
 
   it("rejects a draft with no media", () => {
