@@ -17,8 +17,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadEcosystemMatrix, validateEcosystemMatrix } from "./creator-ecosystem-check.js";
-import { securityAudit } from "./creator-security-audit.js";
+import { loadEcosystemMatrix, validateEcosystemMatrix } from "./creator-ecosystem-check.ts";
+import { securityAudit } from "./creator-security-audit.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 

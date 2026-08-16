@@ -61,8 +61,10 @@ export interface AuditResult {
   findings: AuditFinding[];
 }
 
-function collectFiles(dir: string, out: string[]): string[] {
-  let entries: ReturnType<typeof readdirSync>;
+function collectFiles(dir: string, out: string[] = []): string[] {
+  // Structural type avoids the readdirSync withFileTypes Buffer/string overload
+  // mismatch; Dirent is assignable to { name, isDirectory }.
+  let entries: Array<{ name: string; isDirectory(): boolean }>;
   try {
     entries = readdirSync(dir, { withFileTypes: true });
   } catch {
