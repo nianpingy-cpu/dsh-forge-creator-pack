@@ -551,3 +551,9 @@ export const publishPlugin: Plugin = {
 };
 
 export default publishPlugin;
+
+/**
+ * Re-export the production draft content hash so hosts and E2E harnesses can
+ * build a matching approval without reaching into package internals.
+ */
+export { contentHashOf } from "./registry.js";

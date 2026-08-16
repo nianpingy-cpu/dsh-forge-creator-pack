@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, afterAll } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { localizePlugin } from "@dsh-forge-creator/plugin-creator-localize";
@@ -22,6 +22,7 @@ Welcome to this episode
  */
 describe("E2E Story C — 海外本地化 (CREATOR-015)", () => {
   const e2e = createE2E([localizePlugin, voicePlugin]);
+  afterAll(() => e2e.cleanup());
 
   it("runs translate -> align -> tts -> localized asset end to end", async () => {
     // fixture subtitle
@@ -66,8 +67,9 @@ describe("E2E Story C — 海外本地化 (CREATOR-015)", () => {
       provider: "mock",
     });
     expect(localized.ok).toBe(true);
-    const asset = JSON.parse(localized.raw!) as { path?: string; assets?: unknown[] };
-    expect(asset).toBeDefined();
+    const asset = JSON.parse(localized.raw!) as { outputPath: string };
+    expect(asset.outputPath).toBe("loc/localized.srt");
+    expect(existsSync(join(e2e.workspaceRoot, "loc", "localized.srt"))).toBe(true);
     const content = readFileSync(join(e2e.workspaceRoot, "tr.srt"), "utf8");
     expect(content).toContain("fr");
   });

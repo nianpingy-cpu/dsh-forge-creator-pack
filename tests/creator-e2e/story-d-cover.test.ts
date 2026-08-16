@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, afterAll } from "vitest";
 import { coverPlugin } from "@dsh-forge-creator/plugin-creator-cover";
 import { createE2E } from "./harness.js";
 
@@ -18,6 +18,7 @@ interface CoverAsset {
  */
 describe("E2E Story D — 封面变体 (CREATOR-015)", () => {
   const e2e = createE2E([coverPlugin]);
+  afterAll(() => e2e.cleanup());
   const PROFILES = ["youtube-thumbnail", "x-image", "douyin-vertical"] as const;
 
   it("runs base image -> variants -> validate end to end", async () => {

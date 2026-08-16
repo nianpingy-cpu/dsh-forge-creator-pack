@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, afterAll } from "vitest";
 import { radarPlugin } from "@dsh-forge-creator/plugin-creator-radar";
 import { capturePlugin } from "@dsh-forge-creator/plugin-creator-capture";
 import { createE2E } from "./harness.js";
@@ -19,6 +19,7 @@ interface CreatorTopic {
  */
 describe("E2E Story A — 热点到素材 (CREATOR-015)", () => {
   const e2e = createE2E([radarPlugin, capturePlugin]);
+  afterAll(() => e2e.cleanup());
 
   it("runs trend -> rank -> inspect -> authorized capture end to end", async () => {
     // 1. fixture trend

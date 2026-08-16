@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, afterAll } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { transcribePlugin } from "@dsh-forge-creator/plugin-creator-transcribe";
@@ -20,6 +20,7 @@ interface Transcript {
  */
 describe("E2E Story B — 长视频到短视频 (CREATOR-015)", () => {
   const e2e = createE2E([transcribePlugin, creatorClipsPlugin]);
+  afterAll(() => e2e.cleanup());
 
   it("runs transcribe -> clip -> vertical -> subtitle end to end", async () => {
     // fixture video

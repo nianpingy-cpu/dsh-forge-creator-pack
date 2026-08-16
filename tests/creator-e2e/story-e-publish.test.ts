@@ -1,7 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { publishPlugin } from "@dsh-forge-creator/plugin-creator-publish";
+import { describe, expect, it, afterAll } from "vitest";
+import { publishPlugin, contentHashOf } from "@dsh-forge-creator/plugin-creator-publish";
 import { createApproval, type CreatorApproval, type PlatformPostDraft } from "@dsh-forge-creator/core";
-import { contentHashOf } from "../../packages/plugin-creator-publish/src/registry.js";
 import { createE2E } from "./harness.js";
 
 const DRAFT: PlatformPostDraft = {
@@ -29,6 +28,7 @@ function approvalFor(
  */
 describe("E2E Story E — 安全发布 (CREATOR-015)", () => {
   const e2e = createE2E([publishPlugin]);
+  afterAll(() => e2e.cleanup());
 
   it("cannot publish without explicit approval", async () => {
     const created = await e2e.invoke("post_create_draft", {
