@@ -1,8 +1,9 @@
 /**
  * creator-transcribe providers (CREATOR-006).
  *
- * RED: `createTranscribeProvider` is a stub — it throws "not implemented".
- * GREEN wires the deterministic mock and the Whisper-compatible provider.
+ * GREEN: deterministic mock provider for CI. The whisper path is executed
+ * directly by the tools through ctx.run (external binary); the provider
+ * factory serves the mock.
  */
 import type {
   Transcript,
@@ -15,14 +16,38 @@ export interface TranscribeProvider {
   transcribe(options: { audioPath: string; language?: string }): Promise<Transcript>;
 }
 
-/** Build a provider by kind (mock / whisper). */
-export function createTranscribeProvider(
-  _kind: TranscribeProviderKind,
-): TranscribeProvider {
-  throw new Error("not implemented: createTranscribeProvider");
+/** Deterministic mock segments (license-safe fixture transcript). */
+export function mockSegments(): TranscriptSegment[] {
+  return [
+    { id: 0, startMs: 0, endMs: 1200, text: "大家好" },
+    { id: 1, startMs: 1400, endMs: 3000, text: "欢迎收看本期 AI 科普" },
+    { id: 2, startMs: 3200, endMs: 4500, text: "今天我们聊聊大模型" },
+  ];
 }
 
-/** Deterministic mock segments (stub). */
-export function mockSegments(_audioPath: string): TranscriptSegment[] {
-  throw new Error("not implemented: mockSegments");
+/** Build a provider by kind (mock for CI; whisper runs via ctx.run in tools). */
+export function createTranscribeProvider(
+  kind: TranscribeProviderKind,
+): TranscribeProvider {
+  switch (kind) {
+    case "mock":
+      return {
+        kind,
+        async transcribe(options) {
+          return {
+            segments: mockSegments(),
+            language: "zh",
+            source: options.audioPath,
+            provider: "mock",
+          };
+        },
+      };
+    case "whisper":
+      throw new Error(
+        "whisper provider is executed by the tool binary path (ctx.run); use provider=whisper on the tool, not the factory",
+      );
+    default:
+      throw new Error(`unsupported transcribe provider kind: ${kind}`);
+  }
 }
+

@@ -29,8 +29,8 @@ import {
   type ToolContext,
   type ExecutionResult,
   type CreatorAsset,
+  type InputSchema,
   assertCreatorAssetInWorkspace,
-  assertWithinResourceLimits,
 } from "@dsh-forge-creator/core";
 import { existsSync, readFileSync, writeFileSync, statSync } from "node:fs";
 import { createTranscribeProvider } from "./providers.js";
@@ -53,6 +53,13 @@ const CORE_VERSION = "0.1.0" as const;
 
 /** Centralized duration guard (overridable per call). */
 const MAX_TRANSCRIBE_DURATION_SECONDS = 1800;
+
+interface FlowArgs {
+  audio: string;
+  provider?: TranscribeProviderKind;
+  language?: string;
+  maxDurationSeconds?: number;
+}
 
 function invalid(message: string): ToolResult {
   return {
@@ -83,9 +90,29 @@ function validate(
   return null;
 }
 
-function errorCodeOf(err: unknown, fallback: string): string {
+type ToolErrorCode = NonNullable<ToolResult["error"]>["code"];
+
+/** Map a CreatorError code to the ToolError code union. */
+function mapToolErrorCode(code: string): ToolErrorCode {
+  switch (code) {
+    case "CREATOR_OUTPUT_OUTSIDE_WORKSPACE":
+      return "WorkspaceViolation";
+    case "CREATOR_APPROVAL_REQUIRED":
+    case "CREATOR_APPROVAL_EXPIRED":
+      return "PermissionDenied";
+    case "CREATOR_RIGHTS_REQUIRED":
+    case "CREATOR_CREDENTIAL_LEAK":
+    case "CREATOR_RESOURCE_LIMIT_EXCEEDED":
+    case "CREATOR_UNSUPPORTED_CAPABILITY":
+    case "CREATOR_VOICE_AUTHORIZATION_REQUIRED":
+    default:
+      return "ToolFailure";
+  }
+}
+
+function errorCodeOf(err: unknown, fallback: ToolErrorCode): ToolErrorCode {
   const code = (err as { code?: unknown })?.code;
-  return typeof code === "string" ? code : fallback;
+  return typeof code === "string" ? mapToolErrorCode(code) : fallback;
 }
 
 function errorMessageOf(err: unknown, fallback: string): string {
@@ -233,7 +260,9 @@ async function transcribeFlow(
   );
 }
 
-const audioProps: Record<string, unknown> = {
+type PropertySpec = NonNullable<InputSchema["properties"][string]>;
+
+const audioProps: Record<string, PropertySpec> = {
   audio: { type: "string", description: "audio file path inside the workspace" },
   provider: {
     type: "string",
@@ -256,7 +285,7 @@ const transcribeMedia: ToolDefinition = {
   async execute(args, ctx) {
     const bad = validate(transcribeMedia.inputSchema, args);
     if (bad) return bad;
-    return transcribeFlow(ctx, args as typeof args);
+    return transcribeFlow(ctx, args as FlowArgs);
   },
 };
 
@@ -268,7 +297,7 @@ const transcribeSegments: ToolDefinition = {
   async execute(args, ctx) {
     const bad = validate(transcribeSegments.inputSchema, args);
     if (bad) return bad;
-    const res = await transcribeFlow(ctx, args as typeof args);
+    const res = await transcribeFlow(ctx, args as FlowArgs);
     if (!res.ok) return res;
     const transcript = JSON.parse(res.raw!) as Transcript;
     return success(
@@ -287,7 +316,7 @@ const transcribeWords: ToolDefinition = {
   async execute(args, ctx) {
     const bad = validate(transcribeWords.inputSchema, args);
     if (bad) return bad;
-    const res = await transcribeFlow(ctx, args as typeof args);
+    const res = await transcribeFlow(ctx, args as FlowArgs);
     if (!res.ok) return res;
     const transcript = JSON.parse(res.raw!) as Transcript;
     const words: TranscriptSegment[] = [];
@@ -383,7 +412,7 @@ const chapterDetect: ToolDefinition = {
   async execute(args, ctx) {
     const bad = validate(chapterDetect.inputSchema, args);
     if (bad) return bad;
-    const res = await transcribeFlow(ctx, args as typeof args);
+    const res = await transcribeFlow(ctx, args as FlowArgs);
     if (!res.ok) return res;
     const transcript = JSON.parse(res.raw!) as Transcript;
     return success("chapters detected", detectChapters(transcript.segments));
@@ -398,7 +427,7 @@ const languageDetect: ToolDefinition = {
   async execute(args, ctx) {
     const bad = validate(languageDetect.inputSchema, args);
     if (bad) return bad;
-    const res = await transcribeFlow(ctx, args as typeof args);
+    const res = await transcribeFlow(ctx, args as FlowArgs);
     if (!res.ok) return res;
     const transcript = JSON.parse(res.raw!) as Transcript;
     const text = transcript.segments.map((s) => s.text).join(" ");

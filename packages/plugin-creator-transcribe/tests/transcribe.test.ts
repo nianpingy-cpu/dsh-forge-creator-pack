@@ -8,9 +8,9 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { transcribePlugin } from "@dsh-forge-creator/plugin-creator-transcribe";
-import { normalizeSegments, detectChapters, detectLanguage } from "../src/segments.js";
+import { normalizeSegments } from "../src/segments.js";
 import { toSrt, toVtt, toAss } from "../src/subtitle.js";
-import { generateToneWav, parseWavDuration } from "../src/wav.js";
+import { generateToneWav } from "../src/wav.js";
 import {
   runContractSuite,
   type ExecutionResult,
@@ -60,7 +60,7 @@ function parseSrtCues(srt: string): { start: string; end: string; text: string }
     const m = lines[1]?.match(
       /^(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})$/,
     );
-    if (m) cues.push({ start: m[1], end: m[2], text: lines.slice(2).join(" ") });
+    if (m) cues.push({ start: m[1]!, end: m[2]!, text: lines.slice(2).join(" ") });
   }
   return cues;
 }
