@@ -1,8 +1,8 @@
 # PROJECT_STATUS
 
 Current Version: 0.1.0 (bootstrap — no tag yet)
-Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-012)
-Current Issue: CREATOR-012 MERGED — creator-motion (PR #24)
+Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-013)
+Current Issue: CREATOR-013 MERGED — creator-publish (PR #26)
 
 ## Completed (merged + closed with evidence)
 
@@ -92,10 +92,20 @@ Current Issue: CREATOR-012 MERGED — creator-motion (PR #24)
   custom/NOASSERTION, no vendoring, CI mock-only — re-check recorded in
   UPSTREAM_LICENSES.md). 14 tests. External review APPROVE (1 round + NB
   comment: canonical-path binding documented).
+- **CREATOR-013 creator-publish** (PR #26): the highest-risk plugin — 9 tools
+  (publisher_accounts … post_cancel_schedule), strict draft -> validate ->
+  preview -> explicit approval -> schedule/publish lifecycle (prompt can NEVER
+  immediately publish), approval gate via core assertCreatorApproval
+  (content-hash/scope/expiry bound -> PermissionDenied), idempotency keys,
+  retry safety (request-failed vs status-unknown; query remote status before
+  resending), dry-run, platform capability discovery, credential redaction on
+  all outputs, CI mock-only (Postiz AGPL-3.0 / Official / Local as external
+  unconfigured adapters, no vendoring, no browser anti-detection in core).
+  20 tests. External review APPROVE (1 round + NB hardening: failed-outcome
+  retry test, strengthened idempotency/unknown assertions, status redaction).
 
 ## In progress / planned
 
-- CREATOR-013 creator-publish
 - CREATOR-014 Creator Skills
 - CREATOR-015 Presets + E2E Stories
 - CREATOR-016 Release Hardening (v0.1.0 release)
