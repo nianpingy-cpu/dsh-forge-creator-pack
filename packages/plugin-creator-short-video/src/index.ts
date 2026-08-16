@@ -64,6 +64,10 @@ function resolveOutputDir(
   outputDir: string,
 ): { ok: true; canonical: string } | { ok: false; result: ToolResult } {
   try {
+    // NOTE: the canonical path is validated here (symlink-safe, no `..`), but
+    // the mock provider only records the plan. A real provider that writes
+    // assets MUST bind its writes to the canonical path (not the raw
+    // plan.outputDir) to preserve the symlink-swap guard.
     const canonical = assertCreatorAssetInWorkspace(
       { path: outputDir } as CreatorAsset,
       ctx.workspaceRoot,

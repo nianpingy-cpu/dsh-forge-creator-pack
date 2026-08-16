@@ -127,8 +127,3 @@ export function validatePlan(input: PlanInput): PlanOutcome {
     },
   };
 }
-
-/** A mock-derived script when only a topic is supplied. */
-export function deriveScript(plan: ShortVideoPlan): string {
-  return plan.script;
-}

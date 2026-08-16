@@ -154,6 +154,17 @@ describe("short_video_generate (CREATOR-008)", () => {
     expect(res.error?.code).toBe("ToolFailure");
     expect(res.error?.message.toLowerCase()).toContain("not configured");
   });
+
+  it("denies generate without permission approval (workspace-write)", async () => {
+    const res = await tool("short_video_generate").execute(
+      { plan: validPlanInput, provider: "mock" },
+      { workspaceRoot, run: async () => {
+        throw new Error("no binary expected");
+      }, permission: { approved: false } },
+    );
+    expect(res.ok).toBe(false);
+    expect(res.error?.code).toBe("PermissionDenied");
+  });
 });
 
 describe("short_video_status (CREATOR-008)", () => {

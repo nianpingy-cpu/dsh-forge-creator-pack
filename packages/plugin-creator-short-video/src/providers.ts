@@ -90,6 +90,11 @@ export class MockShortVideoProvider {
     }
     if (job.status === "complete" || job.status === "failed") return { ok: true, job };
     job.attempts += 1;
+    // The complete branch is checked first, so under the default
+    // configuration (completeAfterPolls < maxAttempts) the timeout branch is
+    // only reachable when completeAfterPolls > maxAttempts — i.e. a provider
+    // configured to never complete in time. Tool-level Timeout enforcement
+    // lives in index.ts (generate/status poll caps).
     if (job.attempts >= this.completeAfterPolls) {
       job.status = "complete";
     } else if (job.attempts > this.maxAttempts) {
