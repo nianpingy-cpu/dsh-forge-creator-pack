@@ -912,6 +912,227 @@ const mediaCompress: ToolDefinition = {
   },
 };
 
+/**
+ * Probe the first video stream's width/height of a workspace file (used to
+ * verify an aspect-reformatted output — fixed ffprobe argv, no free params).
+ */
+async function probeVideoDimensions(
+  ctx: ToolContext,
+  absolute: string,
+): Promise<{ ok: true; width: number; height: number } | { ok: false; result: ToolResult }> {
+  const run = await runBinary(
+    ctx,
+    resolveFfprobeBinary(),
+    FFPROBE_BINARY_HINT,
+    [
+      "-protocol_whitelist",
+      "file,pipe,fd",
+      "-probesize",
+      PROBE_WINDOW,
+      "-v",
+      "error",
+      "-select_streams",
+      "v:0",
+      "-show_entries",
+      "stream=width,height",
+      "-of",
+      "json",
+      absolute,
+    ],
+    { timeoutMs: 60_000 },
+  );
+  if (!run.ok) return { ok: false, result: run.result };
+  if (run.exec.exitCode !== 0) {
+    return {
+      ok: false,
+      result: toolFailure(
+        firstErrorLine("ffprobe", run.exec.exitCode, run.exec.stderr),
+      ),
+    };
+  }
+  const parsed = parseJsonOutput("ffprobe", run.exec.stdout);
+  if (!parsed.ok) {
+    return {
+      ok: false,
+      result: {
+        ok: false,
+        summary: "ffprobe parse failed",
+        error: { code: "ParseFailure", message: parsed.error },
+      },
+    };
+  }
+  const data = parsed.value as { streams?: { width?: number; height?: number }[] };
+  const stream = Array.isArray(data.streams) ? data.streams[0] : undefined;
+  if (typeof stream?.width !== "number" || typeof stream.height !== "number") {
+    return {
+      ok: false,
+      result: {
+        ok: false,
+        summary: "no video stream",
+        error: {
+          code: "ToolFailure",
+          message: "output has no video stream with dimensions",
+        },
+      },
+    };
+  }
+  return { ok: true, width: stream.width, height: stream.height };
+}
+
+/**
+ * Aspect reformat (vertical 9:16 or square 1:1) as a fixed scale+pad filter,
+ * then VERIFY the written output's aspect ratio via ffprobe. No user-supplied
+ * ffmpeg parameter strings.
+ */
+async function runAspect(
+  ctx: ToolContext,
+  args: WriteArgs & { target: "vertical" | "square" },
+  action: string,
+): Promise<ToolResult> {
+  if (!assertPermission("workspace-write", ctx.permission ?? { approved: false })) {
+    return permissionDenied();
+  }
+  const overwrite = args.overwrite === true;
+  const output = resolveOutput(ctx, args.output, overwrite);
+  if (!output.ok) return output.result;
+  const input = resolveInput(ctx, args.input!);
+  if (!input.ok) return input.result;
+  const dims =
+    args.target === "vertical" ? { w: 1080, h: 1920 } : { w: 1080, h: 1080 };
+  const filter = `scale=${dims.w}:${dims.h}:force_original_aspect_ratio=decrease,pad=${dims.w}:${dims.h}:(ow-iw)/2:(oh-ih)/2`;
+  const run = await runBinary(
+    ctx,
+    resolveFfmpegBinary(),
+    FFMPEG_BINARY_HINT,
+    [
+      "-hide_banner",
+      "-v",
+      "error",
+      "-protocol_whitelist",
+      "file,pipe,fd",
+      "-probesize",
+      PROBE_WINDOW,
+      overwriteFlag(overwrite),
+      "-i",
+      input.absolute,
+      "-vf",
+      filter,
+      "-c:v",
+      "libx264",
+      "-c:a",
+      "aac",
+      output.absolute,
+    ],
+  );
+  if (!run.ok) return run.result;
+  if (run.exec.exitCode !== 0) {
+    return toolFailure(firstErrorLine("ffmpeg", run.exec.exitCode, run.exec.stderr));
+  }
+  const expected = args.target === "vertical" ? 9 / 16 : 1;
+  const dim = await probeVideoDimensions(ctx, output.absolute);
+  if (!dim.ok) return dim.result;
+  const actual = dim.height > 0 ? dim.width / dim.height : 0;
+  if (Math.abs(actual - expected) > 0.02) {
+    return {
+      ok: false,
+      summary: "aspect verification failed",
+      error: {
+        code: "ToolFailure",
+        message: `${action} produced ${dim.width}x${dim.height} (ratio ${actual.toFixed(3)}), expected ~${expected.toFixed(3)}`,
+      },
+    };
+  }
+  return okResult(
+    `${action} -> ${args.output}`,
+    redactCredentials(run.exec.stdout + run.exec.stderr),
+  );
+}
+
+const videoVertical: ToolDefinition = {
+  name: "video_vertical",
+  description:
+    "Reformat a video to 9:16 (scale+pad to 1080x1920) and verify the output aspect ratio via ffprobe (workspace-write; no overwrite unless overwrite=true).",
+  mutationClass: "workspace-write",
+  inputSchema: {
+    type: "object",
+    properties: {
+      input: { type: "string", description: "workspace-relative input media" },
+      output: { type: "string", description: "workspace-relative output file" },
+      overwrite: { type: "boolean", description: "replace the output if it exists" },
+    },
+    required: ["input", "output"],
+  },
+  async execute(args, ctx) {
+    const validated = validateArgs(this.inputSchema, args);
+    if (!validated.ok) return invalid(validated.error);
+    return runAspect(
+      ctx,
+      { ...(validated.value as unknown as WriteArgs), target: "vertical" },
+      "reformatted to vertical",
+    );
+  },
+};
+
+const videoSquare: ToolDefinition = {
+  name: "video_square",
+  description:
+    "Reformat a video to 1:1 (scale+pad to 1080x1080) and verify the output aspect ratio via ffprobe (workspace-write; no overwrite unless overwrite=true).",
+  mutationClass: "workspace-write",
+  inputSchema: {
+    type: "object",
+    properties: {
+      input: { type: "string", description: "workspace-relative input media" },
+      output: { type: "string", description: "workspace-relative output file" },
+      overwrite: { type: "boolean", description: "replace the output if it exists" },
+    },
+    required: ["input", "output"],
+  },
+  async execute(args, ctx) {
+    const validated = validateArgs(this.inputSchema, args);
+    if (!validated.ok) return invalid(validated.error);
+    return runAspect(
+      ctx,
+      { ...(validated.value as unknown as WriteArgs), target: "square" },
+      "reformatted to square",
+    );
+  },
+};
+
+const silenceRemove: ToolDefinition = {
+  name: "silence_remove",
+  description:
+    "Remove silence from an audio file with fixed parameters (-30dB threshold, 0.5s window; workspace-write; no overwrite unless overwrite=true).",
+  mutationClass: "workspace-write",
+  inputSchema: {
+    type: "object",
+    properties: {
+      input: { type: "string", description: "workspace-relative input audio" },
+      output: { type: "string", description: "workspace-relative output file" },
+      overwrite: { type: "boolean", description: "replace the output if it exists" },
+    },
+    required: ["input", "output"],
+  },
+  async execute(args, ctx) {
+    const validated = validateArgs(this.inputSchema, args);
+    if (!validated.ok) return invalid(validated.error);
+    return runWrite(
+      ctx,
+      validated.value as unknown as WriteArgs,
+      ({ input, outputAbs, overwrite }) => [
+        overwriteFlag(overwrite),
+        "-i",
+        input!,
+        "-af",
+        "silenceremove=start_periods=1:start_threshold=-30dB:start_silence=0.5:stop_periods=1:stop_threshold=-30dB:stop_silence=0.5",
+        "-c:a",
+        "aac",
+        outputAbs,
+      ],
+      "removed silence",
+    );
+  },
+};
+
 export const ffmpegPlugin: {
   metadata: {
     name: string;
@@ -936,6 +1157,9 @@ export const ffmpegPlugin: {
       "audio-convert",
       "thumbnail",
       "compress",
+      "vertical",
+      "square",
+      "silence-remove",
       "workspace-write",
     ],
   },
@@ -948,6 +1172,9 @@ export const ffmpegPlugin: {
     audioConvert,
     thumbnailGenerate,
     mediaCompress,
+    videoVertical,
+    videoSquare,
+    silenceRemove,
   ],
 };
 

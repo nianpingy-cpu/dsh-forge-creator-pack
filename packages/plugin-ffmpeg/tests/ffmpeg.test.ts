@@ -659,6 +659,91 @@ describe("robustness", () => {
   });
 });
 
+describe("creator-pack additions (video_vertical / video_square / silence_remove)", () => {
+  const DIMS_JSON = (w: number, h: number) =>
+    JSON.stringify({ streams: [{ width: w, height: h }] });
+
+  /** ffprobe -> dimensions; ffmpeg -> success. */
+  const dimsRunner = (w: number, h: number): ExecutionRunner => async (req) => {
+    if (req.binary.toLowerCase().includes("ffprobe")) {
+      return { exitCode: 0, stdout: DIMS_JSON(w, h), stderr: "", ...OK };
+    }
+    return { exitCode: 0, stdout: FFMPEG_OUTPUT, stderr: "", ...OK };
+  };
+
+  it("video_vertical writes and verifies the 9:16 output ratio", async () => {
+    const tool = () =>
+      ffmpegPlugin.tools.find((t) => t.name === "video_vertical")!;
+    const result = await tool().execute(
+      { input: "tiny.mp4", output: "v.mp4" },
+      ctx(dimsRunner(1080, 1920)),
+    );
+    expect(result.ok).toBe(true);
+    expect(result.summary).toContain("vertical");
+  });
+
+  it("video_vertical fails when the output ratio is not 9:16", async () => {
+    const tool = () =>
+      ffmpegPlugin.tools.find((t) => t.name === "video_vertical")!;
+    // The written output probes as 16:9 -> aspect verification must fail.
+    const result = await tool().execute(
+      { input: "tiny.mp4", output: "v.mp4" },
+      ctx(dimsRunner(1920, 1080)),
+    );
+    expect(result.ok).toBe(false);
+    expect(result.error?.code).toBe("ToolFailure");
+    expect(result.error?.message).toMatch(/ratio|aspect/i);
+  });
+
+  it("video_square verifies the 1:1 output ratio", async () => {
+    const tool = () =>
+      ffmpegPlugin.tools.find((t) => t.name === "video_square")!;
+    const result = await tool().execute(
+      { input: "tiny.mp4", output: "s.mp4" },
+      ctx(dimsRunner(1080, 1080)),
+    );
+    expect(result.ok).toBe(true);
+    expect(result.summary).toContain("square");
+  });
+
+  it("video_vertical denies without permission approval", async () => {
+    const tool = () =>
+      ffmpegPlugin.tools.find((t) => t.name === "video_vertical")!;
+    const result = await tool().execute(
+      { input: "tiny.mp4", output: "v.mp4" },
+      ctx(dimsRunner(1080, 1920), false),
+    );
+    expect(result.ok).toBe(false);
+    expect(result.error?.code).toBe("PermissionDenied");
+  });
+
+  it("video_vertical rejects an output outside the workspace", async () => {
+    const tool = () =>
+      ffmpegPlugin.tools.find((t) => t.name === "video_vertical")!;
+    const result = await tool().execute(
+      { input: "tiny.mp4", output: "../out.mp4" },
+      ctx(dimsRunner(1080, 1920)),
+    );
+    expect(result.ok).toBe(false);
+    expect(result.error?.code).toBe("WorkspaceViolation");
+  });
+
+  it("silence_remove uses a fixed -af silenceremove filter (no free params)", async () => {
+    const tool = () =>
+      ffmpegPlugin.tools.find((t) => t.name === "silence_remove")!;
+    let captured: ExecutionRequest | undefined;
+    const result = await tool().execute(
+      { input: "tiny.wav", output: "sil.wav" },
+      ctx(captureRunner((req) => (captured = req))),
+    );
+    expect(result.ok).toBe(true);
+    const afIndex = captured!.args.indexOf("-af");
+    expect(afIndex).toBeGreaterThan(-1);
+    expect(captured!.args[afIndex + 1]).toMatch(/^silenceremove=/);
+    expect(captured!.args[afIndex + 1]).not.toMatch(/[;&|`$]/);
+  });
+});
+
 describe("live ffmpeg (opt-in)", () => {
   // Real-binary integration: these run the actual upstream ffmpeg/ffprobe
   // against the committed fixtures (fixtures/ffmpeg/tiny.wav + tiny.mp4).
@@ -753,6 +838,32 @@ describe("contract suite", () => {
     const report = await runContractSuite(ffmpegPlugin, {
       workspaceRoot,
       runner: routing,
+      // Aspect tools probe the written output for width/height; each needs
+      // its own expected ratio (vertical 9:16, square 1:1).
+      runnerByTool: {
+        video_vertical: async (req) => {
+          if (req.binary.toLowerCase().includes("ffprobe")) {
+            return {
+              exitCode: 0,
+              stdout: JSON.stringify({ streams: [{ width: 1080, height: 1920 }] }),
+              stderr: "",
+              ...OK,
+            };
+          }
+          return { exitCode: 0, stdout: FFMPEG_OUTPUT, stderr: "", ...OK };
+        },
+        video_square: async (req) => {
+          if (req.binary.toLowerCase().includes("ffprobe")) {
+            return {
+              exitCode: 0,
+              stdout: JSON.stringify({ streams: [{ width: 1080, height: 1080 }] }),
+              stderr: "",
+              ...OK,
+            };
+          }
+          return { exitCode: 0, stdout: FFMPEG_OUTPUT, stderr: "", ...OK };
+        },
+      },
       // Read-only probe tool reaches ctx.run without a permission gate.
       missingBinaryTool: "media_probe",
       missingBinaryToolArgs: { input: "tiny.wav" },
@@ -787,6 +898,18 @@ describe("contract suite", () => {
         },
         media_compress: {
           valid: { input: "tiny.wav", crf: 28, output: "m.wav" },
+          invalid: { input: 42 },
+        },
+        video_vertical: {
+          valid: { input: "tiny.mp4", output: "v.mp4" },
+          invalid: { input: 42 },
+        },
+        video_square: {
+          valid: { input: "tiny.mp4", output: "s.mp4" },
+          invalid: { input: 42 },
+        },
+        silence_remove: {
+          valid: { input: "tiny.wav", output: "sil.wav" },
           invalid: { input: 42 },
         },
       },
