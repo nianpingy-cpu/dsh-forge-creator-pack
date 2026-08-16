@@ -47,8 +47,11 @@ export interface ContractSuiteOptions {
    * runner condition to the normalized BinaryNotFound error — so a plugin
    * that fails to implement binary detection is caught, and real plugins
    * wrapping installed binaries can pass deterministically.
+   *
+   * Optional: a plugin that wraps no binary at all (e.g. a pure-data plugin)
+   * may omit it; the binary-missing check then passes trivially.
    */
-  missingBinaryTool: string;
+  missingBinaryTool?: string;
   /**
    * Arguments to invoke the missing-binary probe with (defaults to {}). Real
    * plugin tools usually require arguments before they reach ctx.run, so
@@ -267,9 +270,21 @@ export async function runContractSuite(
   //    the runner rather than hardcoding the error) and (b) mapped the
   //    runner's condition to the normalized BinaryNotFound error. This is
   //    deterministic for real plugins wrapping installed binaries and still
-  //    catches plugins that fail to implement binary detection.
-  const probe = plugin.tools.find((t) => t.name === options.missingBinaryTool);
-  if (!probe) {
+  //    catches plugins that fail to implement binary detection. A plugin
+  //    that declares no binary dependency omits missingBinaryTool and this
+  //    check passes trivially.
+  const probe = options.missingBinaryTool
+    ? plugin.tools.find((t) => t.name === options.missingBinaryTool)
+    : undefined;
+  if (!options.missingBinaryTool) {
+    checks.push(
+      check(
+        "binary-missing path returns BinaryNotFound",
+        true,
+        "no binary dependency declared (missingBinaryTool omitted)",
+      ),
+    );
+  } else if (!probe) {
     checks.push(
       check(
         "binary-missing path returns BinaryNotFound",

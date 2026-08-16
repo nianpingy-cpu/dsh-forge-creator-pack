@@ -20,19 +20,20 @@ function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value));
 }
 
-/** Deterministic, stable id derived from title + source. */
-function deriveId(title: string, source: string): string {
+/** Deterministic, stable id derived from title (cross-source dedup key). */
+function deriveId(title: string): string {
   let h = 0;
   for (let i = 0; i < title.length; i++) {
     h = (h * 31 + title.charCodeAt(i)) | 0;
   }
-  return `${Math.abs(h).toString(36)}@${source}`;
+  return `topic-${Math.abs(h).toString(36)}`;
 }
 
 /** Normalize a raw provider topic into a consistent CreatorTopic shape. */
-export function normalizeTopic(raw: RawTopic, source: string): CreatorTopic {
+export function normalizeTopic(raw: RawTopic): CreatorTopic {
+  const source = raw.source;
   const topic: CreatorTopic = {
-    id: raw.id ?? deriveId(raw.title, source),
+    id: raw.id ?? deriveId(raw.title),
     title: raw.title,
     source,
     evidence: [`${source}: ${raw.title}`],
@@ -77,6 +78,7 @@ export function dedupeTopics(
 export function scoreTopic(
   topic: CreatorTopic,
   creatorFit?: number,
+  now: number = Date.now(),
 ): TopicScoreBreakdown {
   const evidence: string[] = [...topic.evidence];
   const uncertainty: string[] = [];
@@ -85,7 +87,7 @@ export function scoreTopic(
   if (topic.publishedAt) {
     const parsed = Date.parse(topic.publishedAt);
     const ageDays = Number.isFinite(parsed)
-      ? Math.max(0, Date.now() - parsed) / 86_400_000
+      ? Math.max(0, now - parsed) / 86_400_000
       : undefined;
     if (ageDays === undefined) {
       uncertainty.push("publishedAt is not parseable; freshness not estimated");
@@ -168,9 +170,9 @@ function extractText(block: string, tag: string): string | undefined {
   return value && value.length > 0 ? value : undefined;
 }
 
-/** Parse RSS 2.0 XML into raw topics (title/link/pubDate). */
-export function parseRss(xml: string): RawTopic[] {
-  const topics: RawTopic[] = [];
+/** Parse RSS 2.0 XML into raw topics (title/link/pubDate), source added by the provider. */
+export function parseRss(xml: string): Omit<RawTopic, "source">[] {
+  const topics: Omit<RawTopic, "source">[] = [];
   const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
   let match: RegExpExecArray | null;
   while ((match = itemRegex.exec(xml)) !== null) {

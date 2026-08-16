@@ -22,6 +22,8 @@ export interface CreatorTopic {
 export interface RawTopic {
   /** Provider-assigned id, preserved when present; otherwise derived. */
   id?: string;
+  /** Source label (e.g. "mock:ai", "rss"), used in the normalized topic. */
+  source: string;
   title: string;
   sourceUrl?: string;
   publishedAt?: string;

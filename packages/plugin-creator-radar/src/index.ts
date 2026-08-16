@@ -24,11 +24,7 @@ import {
   type ToolDefinition,
   type ToolResult,
   type ToolContext,
-  type ExecutionResult,
 } from "@dsh-forge-creator/core";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { randomUUID } from "node:crypto";
 import {
   dedupeTopics,
   scoreTopic,
@@ -269,18 +265,27 @@ const topicHistory: ToolDefinition = {
     const { topicId } = args as { topicId: string };
     const found = await findTopic(ctx, topicId);
     if (!found.ok) return found.result;
-    const history = [
-      {
-        at: "2026-08-14T09:00:00Z",
-        source: found.topic.source,
-        event: "first observed",
-      },
-      {
-        at: "2026-08-15T10:00:00Z",
-        source: found.topic.source,
-        event: "mentions increased",
-      },
-    ];
+    const publishedAt = found.topic.publishedAt;
+    const history = publishedAt
+      ? [
+          {
+            at: publishedAt,
+            source: found.topic.source,
+            event: "first observed",
+          },
+          {
+            at: publishedAt,
+            source: found.topic.source,
+            event: "mock history marker (evidence source)",
+          },
+        ]
+      : [
+          {
+            at: null,
+            source: found.topic.source,
+            event: "no published date in evidence",
+          },
+        ];
     return success(`history for ${found.topic.title}`, history);
   },
 };
@@ -303,9 +308,17 @@ const topicVelocity: ToolDefinition = {
     const { topicId } = args as { topicId: string };
     const found = await findTopic(ctx, topicId);
     if (!found.ok) return found.result;
+    const breakdown = scoreTopic(found.topic);
     return success(
       `velocity for ${found.topic.title}`,
-      scoreTopic(found.topic).scores,
+      {
+        topicId: found.topic.id,
+        velocity: breakdown.scores.velocity,
+        evidence: breakdown.evidence.filter((e) => e.includes("velocity")),
+        uncertainty: breakdown.uncertainty.filter((u) =>
+          u.includes("velocity"),
+        ),
+      },
     );
   },
 };
@@ -357,46 +370,13 @@ const opportunityRank: ToolDefinition = {
     const bad = validate(opportunityRank.inputSchema, args);
     if (bad) return bad;
     const { keyword, limit } = args as { keyword?: string; limit?: number };
+    if (limit !== undefined && (!Number.isInteger(limit) || limit < 1 || limit > 100)) {
+      return invalid("limit must be an integer between 1 and 100");
+    }
     const fetched = await fetchTopics(ctx, "mock", keyword);
     if (!fetched.ok) return fetched.result;
     const ranked = rankByOpportunity(fetched.topics).slice(0, limit ?? 3);
     return success(`ranked ${ranked.length} topics`, ranked);
-  },
-};
-
-/** Absolute sentinel so a missing probe binary maps to BinaryNotFound. */
-function resolveProbeBinary(): string {
-  return join(tmpdir(), `dsh-radar-probe-${randomUUID()}`);
-}
-
-const radarProbe: ToolDefinition = {
-  name: "radar_probe",
-  description:
-    "Probe whether an external radar CLI is installed. Returns BinaryNotFound with an install hint when absent.",
-  mutationClass: "read",
-  inputSchema: { type: "object", properties: {} },
-  async execute(args, ctx) {
-    const bad = validate(radarProbe.inputSchema, args);
-    if (bad) return bad;
-    const binary = resolveProbeBinary();
-    let exec: ExecutionResult;
-    try {
-      exec = await ctx.run({ binary, args: ["--version"], cwd: ctx.workspaceRoot });
-    } catch (err) {
-      return toolFailure(`radar probe threw: ${String(err)}`);
-    }
-    if (exec.error?.code === "BinaryNotFound" || exec.exitCode === null) {
-      return {
-        ok: false,
-        summary: "radar CLI binary not found",
-        error: {
-          code: "BinaryNotFound",
-          message:
-            "No external radar CLI is configured. Use the built-in mock/rss sources (no binary required).",
-        },
-      };
-    }
-    return success(`radar probe exit ${exec.exitCode}`, { exitCode: exec.exitCode });
   },
 };
 
@@ -428,6 +408,5 @@ export const radarPlugin: Plugin = {
     topicVelocity,
     competitorWatch,
     opportunityRank,
-    radarProbe,
   ],
 };

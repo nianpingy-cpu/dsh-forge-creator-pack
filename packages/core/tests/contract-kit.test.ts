@@ -302,6 +302,33 @@ describe("runContractSuite", () => {
     }
   });
 
+  it("passes when missingBinaryTool is omitted (plugin declares no binary)", async () => {
+    // A pure-data plugin (e.g. creator-radar) wraps no binary, so the kit
+    // must not force it to expose a binary probe.
+    const noBinaryPlugin: Plugin = {
+      metadata: {
+        name: "@dsh-forge-creator/fixture-no-binary",
+        version: "0.1.0",
+        upstreamTool: "none",
+        coreContractVersion: "0.1.0",
+        capabilities: ["echo"],
+      },
+      tools: [echoTool()],
+    };
+    const report = await runContractSuite(noBinaryPlugin, {
+      workspaceRoot,
+      toolArgs: {
+        echo_message: { valid: { message: "hello kit" }, invalid: { message: 1 } },
+      },
+    });
+    expect(report.passed).toBe(true);
+    expect(
+      report.checks.some(
+        (c) => c.name.includes("binary-missing") && /omitted/i.test(c.detail ?? ""),
+      ),
+    ).toBe(true);
+  });
+
   it("fails for a plugin with a duplicate tool name", async () => {
     const plugin = goodPlugin();
     plugin.tools = [echoTool(), echoTool()];

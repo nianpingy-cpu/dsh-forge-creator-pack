@@ -6,7 +6,7 @@
  * TrendRadar-compatible adapter (GPL-3.0, external service; never configured
  * in CI, so it returns a typed provider error instead of calling the network).
  */
-import { MOCK_TOPICS, MOCK_RSS_XML } from "./fixture.js";
+import { MOCK_RAW_TOPICS, MOCK_RSS_XML } from "./fixture.js";
 import { normalizeTopic, parseRss } from "./normalize.js";
 import type {
   CreatorTopic,
@@ -42,14 +42,14 @@ export interface RadarProvider {
   fetch(options?: { keyword?: string }): Promise<RadarFetchResult>;
 }
 
-/** In-memory mock topics, optionally keyword-filtered. */
+/** In-memory mock topics (normalized through normalizeTopic), keyword-filtered. */
 export function mockTopics(keyword?: string): CreatorTopic[] {
-  const topics = keyword
-    ? MOCK_TOPICS.filter((t) =>
+  const raw = keyword
+    ? MOCK_RAW_TOPICS.filter((t) =>
         t.title.toLowerCase().includes(keyword.toLowerCase()),
       )
-    : [...MOCK_TOPICS];
-  return topics;
+    : [...MOCK_RAW_TOPICS];
+  return raw.map((topic) => normalizeTopic(topic));
 }
 
 /** Build a provider by kind (mock / rss / trendradar). */
@@ -66,10 +66,13 @@ export function createProvider(kind: RadarProviderKind): RadarProvider {
       return {
         kind,
         async fetch() {
-          const raw = parseRss(MOCK_RSS_XML);
+          const raw = parseRss(MOCK_RSS_XML).map((topic) => ({
+            ...topic,
+            source: "rss",
+          }));
           return {
             ok: true,
-            topics: raw.map((topic) => normalizeTopic(topic, "rss")),
+            topics: raw.map((topic) => normalizeTopic(topic)),
           };
         },
       };
@@ -80,13 +83,29 @@ export function createProvider(kind: RadarProviderKind): RadarProvider {
           return {
             ok: false,
             error: {
-              code: "Timeout",
+              code: "ToolFailure",
               message:
                 "TrendRadar-compatible provider is not configured; configure an HTTP/MCP endpoint or use the mock/rss sources (GPL-3.0 upstream, adapter only)",
             },
           };
         },
       };
+    default:
+      // Unreachable from the validated tool surface (enum-gated), but a
+      // normalized error keeps the provider boundary total.
+      return {
+        kind,
+        async fetch() {
+          return {
+            ok: false,
+            error: {
+              code: "ToolFailure",
+              message: `unsupported radar provider kind: ${kind}`,
+            },
+          };
+        },
+      };
   }
 }
+
 

@@ -4,6 +4,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { radarPlugin } from "@dsh-forge-creator/plugin-creator-radar";
 import {
+  normalizeTopic,
+  dedupeTopics,
+  scoreTopic,
+} from "../src/normalize.js";
+import {
   runContractSuite,
   type ExecutionResult,
   type ToolContext,
@@ -121,10 +126,11 @@ describe("opportunity ranking (CREATOR-004)", () => {
 });
 
 describe("contract suite (CREATOR-004)", () => {
-  it("passes the shared plugin contract kit", async () => {
+  it("passes the shared plugin contract kit (no binary dependency)", async () => {
     const report = await runContractSuite(radarPlugin, {
       workspaceRoot,
-      missingBinaryTool: "radar_probe",
+      // Creator-radar wraps no binary: missingBinaryTool is omitted and the
+      // binary-missing check passes trivially.
       toolArgs: {
         trend_sources: { valid: {}, invalid: { unknown: true } },
         trend_fetch: { valid: { source: "mock" }, invalid: { source: "nope" } },
@@ -137,8 +143,10 @@ describe("contract suite (CREATOR-004)", () => {
         topic_history: { valid: { topicId: "t1" }, invalid: {} },
         topic_velocity: { valid: { topicId: "t1" }, invalid: {} },
         competitor_watch: { valid: { query: "AI" }, invalid: {} },
-        opportunity_rank: { valid: {}, invalid: { limit: "x" } },
-        radar_probe: { valid: {}, invalid: { unknown: true } },
+        opportunity_rank: {
+          valid: { limit: 2 },
+          invalid: { limit: 0 },
+        },
       },
     });
     expect(report.passed).toBe(true);
@@ -148,3 +156,72 @@ describe("contract suite (CREATOR-004)", () => {
     }
   });
 });
+
+describe("radar hardening (external review findings)", () => {
+  it("leaves opportunity undefined when a topic has no evidence signals at all", () => {
+    const noSignal = normalizeTopic({
+      id: "bare",
+      source: "mock:ai",
+      title: "无信号测试",
+    });
+    const breakdown = scoreTopic(noSignal, undefined, Date.UTC(2026, 7, 16));
+    expect(breakdown.scores.freshness).toBeUndefined();
+    expect(breakdown.scores.velocity).toBeUndefined();
+    expect(breakdown.scores.opportunity).toBeUndefined();
+    expect(breakdown.uncertainty.length).toBeGreaterThan(0);
+  });
+
+  it("dedupes identical titles across sources via derived ids", () => {
+    const a = normalizeTopic({
+      source: "mock:ai",
+      title: "跨源同题",
+      publishedAt: "2026-08-16T00:00:00Z",
+    });
+    const b = normalizeTopic({
+      source: "rss",
+      title: "跨源同题",
+      publishedAt: "2026-08-16T00:00:00Z",
+    });
+    expect(a.id).toBe(b.id);
+    const deduped = dedupeTopics([a, b]);
+    expect(deduped).toHaveLength(1);
+  });
+
+  it("routes the mock provider through normalizeTopic (uniform shape + evidence)", async () => {
+    const topics = await fetchTopicsRaw("mock");
+    for (const topic of topics) {
+      expect(typeof topic.id).toBe("string");
+      expect(Array.isArray(topic.evidence)).toBe(true);
+      expect(topic.evidence.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("returns velocity-focused output from topic_velocity", async () => {
+    const res = await tool("topic_velocity").execute(
+      { topicId: "t1" },
+      testCtx(),
+    );
+    expect(res.ok).toBe(true);
+    const payload = JSON.parse(res.raw!) as {
+      velocity?: number;
+      evidence: string[];
+    };
+    expect(typeof payload.velocity).toBe("number");
+    expect(payload.evidence.every((e) => e.includes("velocity"))).toBe(true);
+  });
+
+  it("rejects invalid opportunity_rank limits", async () => {
+    const res = await tool("opportunity_rank").execute(
+      { limit: 0 },
+      testCtx(),
+    );
+    expect(res.ok).toBe(false);
+    expect(res.error?.code).toBe("InvalidArguments");
+    const neg = await tool("opportunity_rank").execute(
+      { limit: -1 },
+      testCtx(),
+    );
+    expect(neg.ok).toBe(false);
+  });
+});
+
