@@ -328,10 +328,11 @@ async function runDownload(
   );
 }
 
-/** Shared inspect flow (read tools). */
+/** Shared inspect flow (read tools). Secrets (e.g. sourceUrl) are redacted. */
 async function runInspect(
   ctx: ToolContext,
   argv: string[],
+  secrets: readonly string[] = [],
 ): Promise<ToolResult> {
   let exec: ExecutionResult;
   try {
@@ -341,6 +342,7 @@ async function runInspect(
       cwd: ctx.workspaceRoot,
       timeoutMs: 60_000,
       maxOutputBytes: 20 * 1024 * 1024,
+      redact: secrets,
     });
   } catch (err) {
     return toolFailure(`yt-dlp runner threw: ${String(err)}`);
@@ -449,7 +451,7 @@ const mediaInspect: ToolDefinition = {
     const bad = validate(mediaInspect.inputSchema, args);
     if (bad) return bad;
     const { sourceUrl } = args as { sourceUrl: string };
-    return runInspect(ctx, buildInspectArgv(sourceUrl));
+    return runInspect(ctx, buildInspectArgv(sourceUrl), [sourceUrl]);
   },
 };
 
@@ -469,7 +471,7 @@ const mediaFormats: ToolDefinition = {
     const bad = validate(mediaFormats.inputSchema, args);
     if (bad) return bad;
     const { sourceUrl } = args as { sourceUrl: string };
-    return runInspect(ctx, buildFormatsArgv(sourceUrl));
+    return runInspect(ctx, buildFormatsArgv(sourceUrl), [sourceUrl]);
   },
 };
 
@@ -491,7 +493,11 @@ const playlistInspect: ToolDefinition = {
     if (bad) return bad;
     const { sourceUrl, limit } = args as { sourceUrl: string; limit?: number };
     const bounded = Math.min(Math.max(limit ?? 10, 1), 50);
-    return runInspect(ctx, buildPlaylistArgv(sourceUrl, "", bounded, false));
+    return runInspect(
+      ctx,
+      buildPlaylistArgv(sourceUrl, "", bounded, false),
+      [sourceUrl],
+    );
   },
 };
 
