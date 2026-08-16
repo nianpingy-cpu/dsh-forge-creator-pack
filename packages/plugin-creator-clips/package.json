@@ -1,0 +1,19 @@
+{
+  "name": "@dsh-forge-creator/plugin-creator-clips",
+  "version": "0.1.0",
+  "description": "Creator-workflow clipping: high-level clip/chapter/transcript/silence/vertical/square/batch/merge tools composing the carried-in ffmpeg adapter (no free-form ffmpeg params)",
+  "license": "MIT",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean"
+  },
+  "dependencies": {
+    "@dsh-forge-creator/core": "workspace:*",
+    "@dsh-forge-creator/plugin-ffmpeg": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0"
+  }
+}

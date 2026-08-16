@@ -22,6 +22,8 @@
   },
   "devDependencies": {
     "@dsh-forge-creator/core": "workspace:*",
+    "@dsh-forge-creator/plugin-ffmpeg": "workspace:*",
+    "@dsh-forge-creator/plugin-creator-clips": "workspace:*",
     "@dsh-forge-creator/plugin-creator-radar": "workspace:*",
     "@dsh-forge-creator/plugin-creator-capture": "workspace:*",
     "@dsh-forge-creator/plugin-creator-transcribe": "workspace:*",

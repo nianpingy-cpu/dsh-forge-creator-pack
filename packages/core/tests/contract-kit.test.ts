@@ -10,6 +10,7 @@ import {
   type Plugin,
   type ToolDefinition,
   type ToolResult,
+  type InputSchema,
 } from "@dsh-forge-creator/core";
 
 const NODE = process.execPath;
@@ -213,6 +214,19 @@ describe("validateArgs", () => {
     const result = validateArgs(schema, { message: 42 });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error).toMatch(/message/);
+  });
+
+  it("accepts any value type in a union (number|string)", () => {
+    const union: InputSchema = {
+      type: "object",
+      properties: {
+        start: { type: ["number", "string"] },
+      },
+      required: ["start"],
+    };
+    expect(validateArgs(union, { start: 2 }).ok).toBe(true);
+    expect(validateArgs(union, { start: "0:05" }).ok).toBe(true);
+    expect(validateArgs(union, { start: true }).ok).toBe(false);
   });
 });
 
