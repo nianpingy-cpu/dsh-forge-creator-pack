@@ -139,4 +139,18 @@ describe("validator hardening (external review findings)", () => {
     expect(report.valid).toBe(false);
     expect(report.problems.join("\n")).toContain("duplicate");
   });
+
+  it("forces adapter/provider integration for custom/non-SPDX licenses", () => {
+    // Regression for review finding #7: a NOASSERTION/custom license row
+    // (e.g. Remotion) must never be vendored.
+    const entries = loadEcosystemMatrix(REPO_ROOT);
+    const mutated = entries.map((e) =>
+      e.capability === "creator-motion"
+        ? { ...e, integrationMode: "bundle upstream source into the repo" }
+        : e,
+    );
+    const report = validateEcosystemMatrix(mutated);
+    expect(report.valid).toBe(false);
+    expect(report.problems.join("\n")).toContain("creator-motion");
+  });
 });

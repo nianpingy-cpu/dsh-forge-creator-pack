@@ -88,6 +88,21 @@ export function isExplicitLicense(license: string): boolean {
   return true;
 }
 
+/**
+ * Whether an integration mode is adapter/provider-safe — i.e. it cannot copy
+ * upstream source into the repository.
+ */
+export function isAdapterSafe(mode: string): boolean {
+  const normalized = mode.toLowerCase();
+  return (
+    normalized.includes("adapter") ||
+    normalized.includes("provider") ||
+    normalized.includes("external") ||
+    normalized.includes("no vendoring") ||
+    normalized.includes("no source")
+  );
+}
+
 export interface EcosystemValidation {
   valid: boolean;
   problems: string[];
@@ -154,15 +169,24 @@ export function validateEcosystemMatrix(
     const licenseUpper = String(entry.license ?? "").toUpperCase();
     if (COPYLEFT_LICENSES.some((l) => licenseUpper.includes(l))) {
       const mode = entry.integrationMode.toLowerCase();
-      const adapterSafe =
-        mode.includes("adapter") ||
-        mode.includes("provider") ||
-        mode.includes("external") ||
-        mode.includes("no vendoring") ||
-        mode.includes("no source");
+      const adapterSafe = isAdapterSafe(mode);
       if (!adapterSafe) {
         problems.push(
           `capability '${entry.capability}': ${entry.license} license requires adapter/provider integration, got '${entry.integrationMode}'`,
+        );
+      }
+    }
+  }
+
+  // 3b. Custom / non-standard licenses (e.g. Remotion License, NOASSERTION)
+  // must be adapter-safe too — never vendored (review finding #7).
+  for (const entry of entries) {
+    const license = String(entry.license ?? "");
+    if (/NOASSERTION|custom license|remotion license/i.test(license)) {
+      const mode = entry.integrationMode.toLowerCase();
+      if (!isAdapterSafe(mode)) {
+        problems.push(
+          `capability '${entry.capability}': '${entry.license}' is a custom/non-standard license and must use adapter/provider integration (no vendoring), got '${entry.integrationMode}'`,
         );
       }
     }
