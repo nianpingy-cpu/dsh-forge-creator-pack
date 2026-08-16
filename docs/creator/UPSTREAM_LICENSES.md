@@ -32,6 +32,19 @@
    record the conclusion here. Do NOT vendor Remotion; implement only a generic
    HTTP/command provider interface plus a fully-local deterministic mock
    renderer so CI never needs Remotion.
+
+   **CREATOR-012 implementation-time re-check (2026-08-16):** Remotion's
+   LICENSE is the custom "Remotion License" (GitHub reports `NOASSERTION`);
+   it permits free use for individuals and non-commercial/open-source projects
+   but requires a paid Company License for company/commercial use, and
+   redistribution of the source/engine carries obligations. Conclusion: **do
+   NOT vendor or reimplement Remotion**. `plugin-creator-motion` ships a
+   generic Remotion-compatible HTTP/command provider interface (unconfigured ->
+   typed ToolFailure) plus a fully-local deterministic mock renderer with
+   built-in template fixtures; CI uses only the mock. (Re-check note: direct
+   license re-fetch from github.com was blocked by the sandbox network policy
+   at implementation time; the conclusion relies on the CREATOR-001 record and
+   the conservative gate: no vendoring, no company-licensed rendering in CI.)
 2. **social-auto-upload gate** — no license file → never vendor, never partially
    copy. CN-platform automation in `creator-publish` uses an adapter /
    `LocalAutomationProvider` whose behavior is described from the API/CLI
