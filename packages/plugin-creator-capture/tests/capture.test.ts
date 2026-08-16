@@ -272,6 +272,22 @@ describe("capture hardening (external review findings)", () => {
     );
     expect(res.ok).toBe(false);
   });
+
+  it("redacts the source URL in inspect requests (credential safety)", async () => {
+    // yt-dlp -J embeds the source URL verbatim; a signed/credentialed URL
+    // must be redacted from captured output before it reaches the model.
+    let captured: Parameters<ToolContext["run"]>[0] | undefined;
+    const runner = async (req: Parameters<ToolContext["run"]>[0]) => {
+      captured = req;
+      return OK;
+    };
+    const res = await tool("media_inspect").execute(
+      { sourceUrl: "https://user:secret@example.invalid/v" },
+      { workspaceRoot, run: runner, permission: { approved: true } },
+    );
+    expect(res.ok).toBe(true);
+    expect(captured?.redact).toContain("https://user:secret@example.invalid/v");
+  });
 });
 
 describe("contract suite (CREATOR-005)", () => {
