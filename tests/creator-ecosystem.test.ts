@@ -76,3 +76,64 @@ describe("creator ecosystem & overlap lock (CREATOR-001)", () => {
     expect(ffmpeg!.decision).toBe("REUSE");
   });
 });
+
+describe("validator hardening (external review findings)", () => {
+  it("treats 'none (no license file; not explicit)' as not-explicit — social-auto-upload cannot INTEGRATE", () => {
+    // Regression for review finding #1: the regex-only explicit-license check
+    // is blind to the real license string, which would let a future change
+    // switch social-auto-upload to INTEGRATE despite the no-vendoring rule.
+    const entries = loadEcosystemMatrix(REPO_ROOT);
+    const mutated = entries.map((e) =>
+      e.capability === "social-auto-upload"
+        ? { ...e, decision: "INTEGRATE" as const }
+        : e,
+    );
+    const report = validateEcosystemMatrix(mutated);
+    expect(report.valid).toBe(false);
+    expect(report.problems.join("\n")).toContain("social-auto-upload");
+  });
+
+  it("rejects a GPL row whose integration mode would vendor source", () => {
+    const entries = loadEcosystemMatrix(REPO_ROOT);
+    const mutated = entries.map((e) =>
+      e.capability === "creator-radar"
+        ? { ...e, integrationMode: "copy GPL source into the repository" }
+        : e,
+    );
+    const report = validateEcosystemMatrix(mutated);
+    expect(report.valid).toBe(false);
+    expect(report.problems.join("\n")).toContain("creator-radar");
+  });
+
+  it("reports a missing license field as a problem instead of crashing", () => {
+    // Regression for review finding #3: structurally invalid rows must
+    // produce a diagnostic, not a TypeError.
+    const entries = loadEcosystemMatrix(REPO_ROOT);
+    const [head] = entries;
+    const broken = {
+      capability: "fixture-broken",
+      existingDshOverlap: head!.existingDshOverlap,
+      candidateUpstream: head!.candidateUpstream,
+      starsDateChecked: head!.starsDateChecked,
+      integrationMode: head!.integrationMode,
+      decision: "DO NOT BUILD" as const,
+      risk: head!.risk,
+      // license key intentionally missing
+    };
+    expect(() =>
+      validateEcosystemMatrix([broken, ...entries]),
+    ).not.toThrow();
+    const report = validateEcosystemMatrix([broken, ...entries]);
+    expect(report.valid).toBe(false);
+    expect(report.problems.join("\n")).toContain("missing license");
+  });
+
+  it("detects duplicate capability rows", () => {
+    // Regression for review finding #4: duplicate rows must be reported.
+    const entries = loadEcosystemMatrix(REPO_ROOT);
+    const duplicated = [...entries, ...entries.slice(0, 1)];
+    const report = validateEcosystemMatrix(duplicated);
+    expect(report.valid).toBe(false);
+    expect(report.problems.join("\n")).toContain("duplicate");
+  });
+});
