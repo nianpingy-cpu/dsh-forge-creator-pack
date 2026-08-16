@@ -144,8 +144,7 @@ describe("contract suite (CREATOR-004)", () => {
     expect(report.passed).toBe(true);
     if (!report.passed) {
       const failed = report.checks.filter((c) => !c.passed);
-      // eslint-disable-next-line no-console
-      console.error(JSON.stringify(failed, null, 2));
+      process.stderr.write(JSON.stringify(failed, null, 2) + "\n");
     }
   });
 });

@@ -20,6 +20,8 @@ export interface CreatorTopic {
 
 /** A topic as it arrives from a raw provider (pre-normalization). */
 export interface RawTopic {
+  /** Provider-assigned id, preserved when present; otherwise derived. */
+  id?: string;
   title: string;
   sourceUrl?: string;
   publishedAt?: string;
@@ -51,9 +53,6 @@ export interface TopicScoreBreakdown {
   uncertainty: string[];
 }
 
-export interface RadarFetchResult {
-  ok: boolean;
-  topics: CreatorTopic[];
-  /** Normalized provider error (never a raw stack trace). */
-  error?: { code: string; message: string };
-}
+export type RadarFetchResult =
+  | { ok: true; topics: CreatorTopic[] }
+  | { ok: false; error: { code: string; message: string } };

@@ -125,7 +125,7 @@ const trendSources: ToolDefinition = {
     "List configured radar sources (mock / rss / trendradar-compatible) with their provider kind.",
   mutationClass: "read",
   inputSchema: { type: "object", properties: {} },
-  async execute(args, ctx) {
+  async execute(args) {
     const bad = validate(trendSources.inputSchema, args);
     if (bad) return bad;
     return success(`${SOURCES.length} radar sources`, SOURCES);
