@@ -224,6 +224,24 @@ describe("capture hardening (external review findings)", () => {
     expect(res.ok).toBe(false);
   });
 
+  it("rejects playlist_download with a non-positive playlist limit (B4)", async () => {
+    // A non-positive limit must NOT mean "unbounded": reject it explicitly.
+    for (const bad of [0, -1]) {
+      const res = await tool("playlist_download").execute(
+        {
+          sourceUrl: "https://example.invalid/p",
+          outputDir: "playlist",
+          rights: { status: "owned" },
+          conflict: "fail",
+          playlistLimit: bad,
+          dryRun: true,
+        },
+        ctx(),
+      );
+      expect(res.ok, `playlistLimit=${bad} must be rejected`).toBe(false);
+    }
+  });
+
   it("honors the conflict policy in playlist_download argv (N1)", () => {
     const overwrite = buildPlaylistArgv(
       "u",
