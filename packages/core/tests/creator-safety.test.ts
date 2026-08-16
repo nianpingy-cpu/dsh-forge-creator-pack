@@ -61,9 +61,16 @@ describe("approval gate (CREATOR-003)", () => {
   });
 
   it("rejects schedule without approval", () => {
+    // Scheduling is a remote mutation under creator-remote-publish scope:
+    // a validated draft exists but has no approval yet, so scheduling it
+    // must be blocked exactly like publishing.
     expectCreatorThrow(
       () =>
-        assertCreatorApproval(undefined, "creator-remote-publish", "hash-1"),
+        assertCreatorApproval(
+          undefined,
+          "creator-remote-publish",
+          "hash-scheduled-draft",
+        ),
       "CREATOR_APPROVAL_REQUIRED",
     );
   });
