@@ -2,7 +2,7 @@
 
 Current Version: 0.1.0 (bootstrap — no tag yet)
 Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-006)
-Current Issue: CREATOR-005 MERGED — creator-capture (PR #10)
+Current Issue: CREATOR-006 MERGED — creator-transcribe (PR #12)
 
 ## Completed (merged + closed with evidence)
 
@@ -34,13 +34,16 @@ Current Issue: CREATOR-005 MERGED — creator-capture (PR #10)
   playlist_download), typed argv[] (never shell/extra args), rights/provenance,
   permission gate, bounded playlists, source-URL redaction, dry-run. External
   review APPROVE after 4 rounds (B1–B4 + inspect redaction closed).
+- **CREATOR-006 creator-transcribe** (PR #12): 9 tools (transcribe_media …
+  transcript_export), whisper external-binary provider with stdout-JSON +
+  sidecar fallback (openai-whisper naming), deterministic mock, subtitle
+  renderers with injection-safe sanitization (SRT/VTT/ASS), duration guard
+  (header-only read), permission gates, timeout/redaction. 25 tests. External
+  review APPROVE after 2 rounds (B1 subtitle-injection closed via regression
+  TDD; reviewer-recommended whisper sidecar + JSON-shape cleanup applied).
 
 ## In progress / planned
 
-- CREATOR-006 creator-transcribe
-- CREATOR-004 creator-radar
-- CREATOR-005 creator-capture
-- CREATOR-006 creator-transcribe
 - CREATOR-007 creator-clips
 - CREATOR-008 creator-short-video
 - CREATOR-009 creator-cover
