@@ -2,7 +2,7 @@
 
 Current Version: 0.1.0 (bootstrap — no tag yet)
 Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-006)
-Current Issue: CREATOR-004 MERGED — creator-radar (PR #8)
+Current Issue: CREATOR-005 MERGED — creator-capture (PR #10)
 
 ## Completed (merged + closed with evidence)
 
@@ -30,10 +30,14 @@ Current Issue: CREATOR-004 MERGED — creator-radar (PR #8)
   TrendRadar-compatible adapter), evidence-backed scoring, shared contract
   suite; core kit `missingBinaryTool` now optional for binary-free plugins.
   External review APPROVE (2 rounds, no blocking findings).
+- **CREATOR-005 creator-capture** (PR #10): 8 tools (media_inspect …
+  playlist_download), typed argv[] (never shell/extra args), rights/provenance,
+  permission gate, bounded playlists, source-URL redaction, dry-run. External
+  review APPROVE after 4 rounds (B1–B4 + inspect redaction closed).
 
 ## In progress / planned
 
-- CREATOR-005 creator-capture
+- CREATOR-006 creator-transcribe
 - CREATOR-004 creator-radar
 - CREATOR-005 creator-capture
 - CREATOR-006 creator-transcribe
