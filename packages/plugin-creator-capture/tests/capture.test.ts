@@ -41,6 +41,12 @@ const ctx = (): ToolContext => ({
   permission: { approved: true },
 });
 
+const ctxUnapproved = (): ToolContext => ({
+  workspaceRoot,
+  run: async () => OK,
+  permission: { approved: false },
+});
+
 const tool = (name: string) =>
   capturePlugin.tools.find((t) => t.name === name)!;
 
@@ -157,6 +163,92 @@ describe("download flow (CREATOR-005)", () => {
     expect(Array.isArray(payload.argv)).toBe(true);
     expect(payload.asset.rights?.status).toBe("owned");
     expect(payload.asset.source).toBe("https://example.invalid/v");
+  });
+});
+
+describe("capture hardening (external review findings)", () => {
+  it("denies a workspace-write download without approval (B1)", async () => {
+    const res = await tool("media_download").execute(
+      {
+        sourceUrl: "https://example.invalid/v",
+        outputPath: "out.mp4",
+        rights: { status: "owned" },
+        conflict: "fail",
+      },
+      ctxUnapproved(),
+    );
+    expect(res.ok).toBe(false);
+    expect(res.error?.code).toBe("PermissionDenied");
+  });
+
+  it("rejects a null/empty rights confirmation instead of defaulting to owned (B2)", async () => {
+    const res = await tool("media_download").execute(
+      {
+        sourceUrl: "https://example.invalid/v",
+        outputPath: "out.mp4",
+        rights: null,
+        conflict: "fail",
+        dryRun: true,
+      },
+      ctx(),
+    );
+    expect(res.ok).toBe(false);
+  });
+
+  it("rejects playlist_download with unknown rights (B3)", async () => {
+    const res = await tool("playlist_download").execute(
+      {
+        sourceUrl: "https://example.invalid/p",
+        outputDir: "playlist",
+        rights: { status: "unknown" },
+        conflict: "fail",
+        dryRun: true,
+      },
+      ctx(),
+    );
+    expect(res.ok).toBe(false);
+  });
+
+  it("rejects playlist_download over the batch limit (B4)", async () => {
+    const res = await tool("playlist_download").execute(
+      {
+        sourceUrl: "https://example.invalid/p",
+        outputDir: "playlist",
+        rights: { status: "owned" },
+        conflict: "fail",
+        playlistLimit: 5001,
+        dryRun: true,
+      },
+      ctx(),
+    );
+    expect(res.ok).toBe(false);
+  });
+
+  it("honors the conflict policy in playlist_download argv (N1)", () => {
+    const overwrite = buildPlaylistArgv(
+      "u",
+      "dir",
+      10,
+      true,
+      "overwrite-approved",
+    );
+    expect(overwrite).toContain("--force-overwrites");
+    const fail = buildPlaylistArgv("u", "dir", 10, true, "fail");
+    expect(fail).toContain("--no-overwrites");
+  });
+
+  it("rejects an output path escaping the workspace at the tool level", async () => {
+    const res = await tool("media_download").execute(
+      {
+        sourceUrl: "u",
+        outputPath: "../escape.mp4",
+        rights: { status: "owned" },
+        conflict: "fail",
+        dryRun: true,
+      },
+      ctx(),
+    );
+    expect(res.ok).toBe(false);
   });
 });
 
