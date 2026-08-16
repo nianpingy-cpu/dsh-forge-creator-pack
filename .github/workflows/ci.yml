@@ -61,3 +61,6 @@ jobs:
 
       - name: Validate creator ecosystem matrix
         run: node scripts/creator-ecosystem-check.ts
+
+      - name: Lint creator skills (CREATOR-014)
+        run: node scripts/creator-skill-lint.ts
