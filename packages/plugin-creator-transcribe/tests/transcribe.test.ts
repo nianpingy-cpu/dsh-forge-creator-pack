@@ -137,9 +137,15 @@ describe("subtitle rendering (CREATOR-006)", () => {
       },
     ];
     const vtt = toVtt(evil);
-    expect(vtt).not.toContain("::cue");
-    // WEBVTT header + one cue block only.
-    expect(vtt.trim().split("\n\n").length).toBe(2);
+    // Exactly two "\n\n"-separated blocks: the WEBVTT header and a single
+    // cue. A NOTE/STYLE/REGION block injection would add a third block.
+    const blocks = vtt.trim().split("\n\n");
+    expect(blocks.length).toBe(2);
+    // The only block after the header must be a cue (starts with a valid
+    // timestamp), not an injected NOTE/STYLE block.
+    expect(blocks[1]!.split("\n")[0]).toMatch(
+      /^\d{2}:\d{2}:\d{2}\.\d{3} --> /,
+    );
   });
 
   it("sanitizes transcript text against ASS override-tag injection", () => {
@@ -152,10 +158,14 @@ describe("subtitle rendering (CREATOR-006)", () => {
       },
     ];
     const ass = toAss(evil);
-    expect(ass).not.toContain("{\\pos");
-    expect(ass).not.toContain("\\alpha");
-    // Only the real [Events] section header appears once.
-    expect(ass.split("[Events]").length - 1).toBe(1);
+    // No ASCII brace pairs survive, so libass/Aegisub cannot parse any
+    // override tag from transcript text.
+    expect(ass).not.toContain("{");
+    expect(ass).not.toContain("}");
+    // Only one standalone section header line named [Events] (the real one);
+    // the injected text cannot create a second section header.
+    const eventHeaders = ass.split("\n").filter((line) => line.trim() === "[Events]");
+    expect(eventHeaders.length).toBe(1);
   });
 });
 
@@ -236,6 +246,116 @@ describe("audio flow (CREATOR-006)", () => {
     for (const c of cues) {
       expect(c.start).toMatch(/^\d{2}:\d{2}:\d{2},\d{3}$/);
     }
+  });
+});
+
+describe("whisper integration path (CREATOR-006)", () => {
+  const whisperJson = JSON.stringify({
+    segments: [
+      { start: 0.0, end: 1.2, text: " hello world " },
+      { start: 1.2, end: 2.5, text: "second segment" },
+    ],
+  });
+
+  const whisperCtx = (exec: Partial<ExecutionResult>): ToolContext => ({
+    workspaceRoot,
+    run: async () => ({ ...OK, ...exec }),
+    permission: { approved: true },
+  });
+
+  it("parses realistic whisper JSON from stdout", async () => {
+    writeFileSync(join(workspaceRoot, "w1.wav"), generateToneWav(0.2, 8000));
+    const res = await tool("transcribe_media").execute(
+      { audio: "w1.wav", provider: "whisper" },
+      whisperCtx({ stdout: whisperJson }),
+    );
+    expect(res.ok).toBe(true);
+    const t = JSON.parse(res.raw!) as Transcript;
+    expect(t.segments.map((s) => s.text)).toEqual([
+      "hello world",
+      "second segment",
+    ]);
+    expect(normalizeSegments(t.segments).ok).toBe(true);
+  });
+
+  it("falls back to the <audio>.json sidecar when stdout is not JSON", async () => {
+    writeFileSync(join(workspaceRoot, "w2.wav"), generateToneWav(0.2, 8000));
+    // openai-whisper writes structured JSON to <audio>.json and prints
+    // human-readable text to stdout.
+    writeFileSync(
+      join(workspaceRoot, "w2.wav.json"),
+      whisperJson,
+      "utf8",
+    );
+    const res = await tool("transcribe_media").execute(
+      { audio: "w2.wav", provider: "whisper" },
+      whisperCtx({ stdout: "hello world\nsecond segment\n" }),
+    );
+    expect(res.ok).toBe(true);
+    const t = JSON.parse(res.raw!) as Transcript;
+    expect(t.segments.map((s) => s.text)).toEqual([
+      "hello world",
+      "second segment",
+    ]);
+  });
+
+  it("returns a typed failure when whisper output is malformed", async () => {
+    writeFileSync(join(workspaceRoot, "w3.wav"), generateToneWav(0.2, 8000));
+    const res = await tool("transcribe_media").execute(
+      { audio: "w3.wav", provider: "whisper" },
+      whisperCtx({ stdout: "not json at all" }),
+    );
+    expect(res.ok).toBe(false);
+    expect(res.error?.message.toLowerCase()).toContain("malformed");
+  });
+
+  it("surfaces whisper stderr on non-zero exit", async () => {
+    writeFileSync(join(workspaceRoot, "w4.wav"), generateToneWav(0.2, 8000));
+    const res = await tool("transcribe_media").execute(
+      { audio: "w4.wav", provider: "whisper" },
+      whisperCtx({ exitCode: 1, stderr: "model load failed: boom" }),
+    );
+    expect(res.ok).toBe(false);
+    expect(res.error?.code).toBe("ToolFailure");
+    expect(res.error?.message).toContain("boom");
+  });
+
+  it("maps whisper timeout to a Timeout error", async () => {
+    writeFileSync(join(workspaceRoot, "w5.wav"), generateToneWav(0.2, 8000));
+    const res = await tool("transcribe_media").execute(
+      { audio: "w5.wav", provider: "whisper" },
+      whisperCtx({ timedOut: true }),
+    );
+    expect(res.ok).toBe(false);
+    expect(res.error?.code).toBe("Timeout");
+  });
+});
+
+describe("permission gate (CREATOR-006)", () => {
+  it("denies subtitle_srt without approval", async () => {
+    writeFileSync(join(workspaceRoot, "p1.wav"), generateToneWav(0.2, 8000));
+    const deniedCtx: ToolContext = {
+      workspaceRoot,
+      run: async () => OK,
+      permission: { approved: false },
+    };
+    const res = await tool("subtitle_srt").execute(
+      { audio: "p1.wav", outputPath: "p1.srt" },
+      deniedCtx,
+    );
+    expect(res.ok).toBe(false);
+    expect(res.error?.code).toBe("PermissionDenied");
+  });
+
+  it("denies transcript_export when permission is absent", async () => {
+    writeFileSync(join(workspaceRoot, "p2.wav"), generateToneWav(0.2, 8000));
+    const noPermCtx: ToolContext = { workspaceRoot, run: async () => OK };
+    const res = await tool("transcript_export").execute(
+      { audio: "p2.wav", outputPath: "p2.txt" },
+      noPermCtx,
+    );
+    expect(res.ok).toBe(false);
+    expect(res.error?.code).toBe("PermissionDenied");
   });
 });
 

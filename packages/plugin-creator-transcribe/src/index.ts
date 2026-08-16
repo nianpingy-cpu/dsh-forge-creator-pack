@@ -32,7 +32,15 @@ import {
   type InputSchema,
   assertCreatorAssetInWorkspace,
 } from "@dsh-forge-creator/core";
-import { existsSync, readFileSync, writeFileSync, statSync } from "node:fs";
+import {
+  existsSync,
+  writeFileSync,
+  readFileSync,
+  statSync,
+  openSync,
+  readSync,
+  closeSync,
+} from "node:fs";
 import { createTranscribeProvider } from "./providers.js";
 import {
   normalizeSegments,
@@ -153,7 +161,9 @@ function guardAudio(
         result: invalid("audio file is empty"),
       };
     }
-    const duration = parseWavDuration(readFileSync(canonical));
+    // Read only the WAV header (44 bytes) to derive duration instead of
+    // loading a potentially large media file into memory.
+    const duration = readWavHeaderDuration(canonical);
     const cap = maxDurationSeconds ?? MAX_TRANSCRIBE_DURATION_SECONDS;
     if (duration !== undefined && duration > cap) {
       return {
@@ -170,6 +180,24 @@ function guardAudio(
     }
   }
   return { ok: true, canonical };
+}
+
+/**
+ * Read only the 44-byte WAV header from disk to derive duration, avoiding a
+ * full-file read for potentially large media (resource guard).
+ */
+function readWavHeaderDuration(path: string): number | undefined {
+  let fd: number | undefined;
+  try {
+    fd = openSync(path, "r");
+    const header = Buffer.alloc(44);
+    const bytes = readSync(fd, header, 0, 44, 0);
+    return parseWavDuration(header.subarray(0, bytes));
+  } catch {
+    return undefined;
+  } finally {
+    if (fd !== undefined) closeSync(fd);
+  }
 }
 
 /** Shared transcription flow. */
@@ -196,7 +224,7 @@ async function transcribeFlow(
         cwd: ctx.workspaceRoot,
         timeoutMs: 600_000,
         maxOutputBytes: 20 * 1024 * 1024,
-        redact: [args.audio],
+        redact: [args.audio, guarded.canonical],
       });
     } catch (err) {
       return toolFailure(`whisper runner threw: ${String(err)}`);
@@ -224,7 +252,16 @@ async function transcribeFlow(
     try {
       parsed = JSON.parse(exec.stdout) as typeof parsed;
     } catch {
-      return toolFailure("whisper returned malformed JSON output");
+      // openai-whisper prints human-readable text to stdout and writes the
+      // structured JSON to `<audio>.json` next to the input; fall back to
+      // that sidecar file when stdout is not JSON.
+      try {
+        parsed = JSON.parse(
+          readFileSync(`${guarded.canonical}.json`, "utf8"),
+        ) as typeof parsed;
+      } catch {
+        return toolFailure("whisper returned malformed JSON output");
+      }
     }
     const raw = (parsed.segments ?? []).map((s, i) => ({
       id: i,
