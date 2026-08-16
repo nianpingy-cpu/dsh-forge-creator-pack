@@ -37,7 +37,10 @@ export interface BackgroundProvider {
 
 /** Deterministic mock background provider (records dimensions). */
 export class MockCoverProvider implements BackgroundProvider {
-  generate(outputPath: string, opts: BackgroundOptions) {
+  generate(
+    outputPath: string,
+    opts: BackgroundOptions,
+  ): { ok: true; result: CoverBackgroundResult } {
     recordCover(outputPath, opts.width, opts.height);
     return {
       ok: true,
@@ -53,7 +56,7 @@ export class MockCoverProvider implements BackgroundProvider {
 
 /** External ComfyUI adapter (unconfigured -> typed ToolFailure). */
 class ComfyUIProvider implements BackgroundProvider {
-  generate() {
+  generate(): { ok: false; result: ToolResult } {
     return {
       ok: false,
       result: {

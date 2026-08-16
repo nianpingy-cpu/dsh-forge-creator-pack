@@ -7,7 +7,6 @@ import {
   runContractSuite,
   type ToolContext,
 } from "@dsh-forge-creator/core";
-import type { PlatformProfile } from "../src/platforms.js";
 import type { LayoutResult } from "../src/layout.js";
 
 let workspaceRoot: string;
@@ -189,8 +188,8 @@ describe("cover_resize / cover_validate (CREATOR-009)", () => {
       ctx(),
     );
     expect(res.ok).toBe(true);
-    const dims = JSON.parse(res.raw!) as { width: number; height: number };
-    expect(dims).toEqual({ width: 1280, height: 720 });
+    const dims = JSON.parse(res.raw!) as { path: string; width: number; height: number };
+    expect(dims).toMatchObject({ width: 1280, height: 720 });
 
     const check = await tool("cover_validate").execute(
       { inputPath: "resized.png", profile: "youtube-thumbnail" },
