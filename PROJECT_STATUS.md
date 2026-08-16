@@ -2,7 +2,7 @@
 
 Current Version: 0.1.0 (bootstrap — no tag yet)
 Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-006)
-Current Issue: CREATOR-003 MERGED — Creator Safety Policy (PR #6)
+Current Issue: CREATOR-004 MERGED — creator-radar (PR #8)
 
 ## Completed (merged + closed with evidence)
 
@@ -25,10 +25,15 @@ Current Issue: CREATOR-003 MERGED — Creator Safety Policy (PR #6)
   policy, voice authorization, bypass-flag rejection, credential-plaintext
   rejection, log redaction, resource limits. 32 creator-safety tests. External
   review APPROVE (2 rounds, no blocking findings).
+- **CREATOR-004 creator-radar** (PR #8): first plugin package — 9 tools
+  (trend_sources … opportunity_rank), 3 providers (mock fixture / RSS /
+  TrendRadar-compatible adapter), evidence-backed scoring, shared contract
+  suite; core kit `missingBinaryTool` now optional for binary-free plugins.
+  External review APPROVE (2 rounds, no blocking findings).
 
 ## In progress / planned
 
-- CREATOR-004 creator-radar
+- CREATOR-005 creator-capture
 - CREATOR-004 creator-radar
 - CREATOR-005 creator-capture
 - CREATOR-006 creator-transcribe
