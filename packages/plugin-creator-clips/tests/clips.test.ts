@@ -5,7 +5,6 @@ import { join } from "node:path";
 import { creatorClipsPlugin } from "@dsh-forge-creator/plugin-creator-clips";
 import {
   runContractSuite,
-  type ExecutionRequest,
   type ExecutionResult,
   type ExecutionRunner,
   type ToolContext,
@@ -222,7 +221,8 @@ describe("remove_silence / make_vertical / make_square (CREATOR-007)", () => {
     );
     expect(res.ok).toBe(true);
     expect(args()).toContain("-af");
-    expect(args()).toContain("silenceremove=");
+    // The filter is a single argv element (exact match, not substring).
+    expect(args().some((a) => a.startsWith("silenceremove="))).toBe(true);
   });
 
   it("make_vertical delegates to the adapter vertical tool and verifies 9:16", async () => {
@@ -358,6 +358,32 @@ describe("contract suite (CREATOR-007)", () => {
     const report = await runContractSuite(creatorClipsPlugin, {
       workspaceRoot,
       runner: routing,
+      // make_vertical expects 9:16, make_square expects 1:1 — each needs its
+      // own probed output dimensions.
+      runnerByTool: {
+        make_vertical: async (req) => {
+          if (req.binary.toLowerCase().includes("ffprobe")) {
+            return {
+              exitCode: 0,
+              stdout: JSON.stringify({ streams: [{ width: 1080, height: 1920 }] }),
+              stderr: "",
+              ...OK,
+            };
+          }
+          return { exitCode: 0, stdout: FFMPEG_OUTPUT, stderr: "", ...OK };
+        },
+        make_square: async (req) => {
+          if (req.binary.toLowerCase().includes("ffprobe")) {
+            return {
+              exitCode: 0,
+              stdout: JSON.stringify({ streams: [{ width: 1080, height: 1080 }] }),
+              stderr: "",
+              ...OK,
+            };
+          }
+          return { exitCode: 0, stdout: FFMPEG_OUTPUT, stderr: "", ...OK };
+        },
+      },
       toolArgs: {
         clip_by_time: {
           valid: { input: "source.mp4", start: 2, end: 5, output: "c.mp4" },

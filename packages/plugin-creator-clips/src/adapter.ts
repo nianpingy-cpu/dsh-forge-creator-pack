@@ -7,11 +7,12 @@
  * hardening (workspace boundary, overwrite guard, protocol whitelist, playlist
  * rejection, no shell, permission gate) applies unchanged.
  */
-import {
-  ffmpegPlugin,
-  type ToolDefinition,
-} from "@dsh-forge-creator/plugin-ffmpeg";
-import type { ToolContext, ToolResult } from "@dsh-forge-creator/core";
+import { ffmpegPlugin } from "@dsh-forge-creator/plugin-ffmpeg";
+import type {
+  ToolDefinition,
+  ToolContext,
+  ToolResult,
+} from "@dsh-forge-creator/core";
 
 function adapterTool(name: string): ToolDefinition {
   const tool = ffmpegPlugin.tools.find((t) => t.name === name);
@@ -39,7 +40,8 @@ export async function probeDuration(
   }
   let parsed: { format?: { duration?: string | number } } | null = null;
   try {
-    parsed = JSON.parse(probe.raw ?? "") as typeof parsed;
+    const text = probe.raw ?? "";
+    parsed = JSON.parse(text) as { format?: { duration?: string | number } };
   } catch {
     parsed = null;
   }
