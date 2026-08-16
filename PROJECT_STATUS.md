@@ -1,8 +1,8 @@
 # PROJECT_STATUS
 
 Current Version: 0.1.0 (bootstrap — no tag yet)
-Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-014)
-Current Issue: CREATOR-014 MERGED — Creator Skills (PR #28)
+Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-015)
+Current Issue: CREATOR-015 MERGED — Presets + E2E Stories (PR #30)
 
 ## Completed (merged + closed with evidence)
 
@@ -115,8 +115,21 @@ Current Issue: CREATOR-014 MERGED — Creator Skills (PR #28)
   skill.test.ts`: 7 tests incl. 5 bad-guidance fixtures rejected for their
   exact rule. Strict TDD RED (481ddac) -> GREEN (ef0e389) -> REFACTOR
   (8d62044). External review APPROVE (1 round, no blocking findings).
+- **CREATOR-015 Presets + E2E Stories** (PR #30): `presets/presets`
+  (`@dsh-forge-creator/presets`) — composition-only CreatorPreset manifests
+  (creator-research / creator-video / creator-publisher / creator-full,
+  exact taskbook plugin sets + skill slugs, no plugin code duplication), 9
+  preset tests (exact package sets, no tool collisions, skills on disk,
+  creator-full = union, core contract match). `tests/creator-e2e/`: shared
+  deterministic harness (real plugin tools over a fresh temp workspace, canned
+  media runner) + 5 E2E stories (A 热点到素材 with approval-gated capture, B
+  长视频到短视频, C 海外本地化, D 封面变体, E 安全发布 asserting
+  PermissionDenied before approval + published after). contentHashOf
+  re-exported from publish's public index (review NB). Strict TDD RED
+  (0aee2b8) -> GREEN (177d07d) -> REFACTOR (5712565) + NB fixes (31fb1f7).
+  docs/creator/PRESETS.md. Full suite 435 tests / 27 files. External review
+  APPROVE (1 round, no blocking findings).
 
 ## In progress / planned
 
-- CREATOR-015 Presets + E2E Stories
 - CREATOR-016 Release Hardening (v0.1.0 release)
