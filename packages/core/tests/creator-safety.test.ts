@@ -15,6 +15,7 @@ import {
   safetyError,
   DEFAULT_NETWORK_TIMEOUT_MS,
   DEFAULT_MAX_MEDIA_FILE_SIZE_BYTES,
+  DEFAULT_MAX_BATCH_ITEMS,
   CREATOR_MUTATION_CLASSES,
   type CreatorAsset,
   type CreatorError,
@@ -262,5 +263,137 @@ describe("safety primitives (CREATOR-003)", () => {
     );
     expect(err.code).toBe("CREATOR_APPROVAL_REQUIRED");
     expect(err.message).toContain("approval");
+  });
+});
+
+describe("safety hardening (external review findings)", () => {
+  it("rejects an approval that does not cover the requested scope", () => {
+    const approval = createApproval("creator-remote-draft", "hash-1");
+    expectCreatorThrow(
+      () =>
+        assertCreatorApproval(
+          approval,
+          "creator-remote-publish",
+          "hash-1",
+          approval.expiresAt - 1,
+        ),
+      "CREATOR_APPROVAL_REQUIRED",
+    );
+  });
+
+  it("does not let a draft-scope approval authorize a schedule/publish", () => {
+    const draftApproval = createApproval("creator-remote-draft", "hash-1");
+    expectCreatorThrow(
+      () =>
+        assertCreatorApproval(
+          draftApproval,
+          "creator-remote-publish",
+          "hash-1",
+          draftApproval.expiresAt - 1,
+        ),
+      "CREATOR_APPROVAL_REQUIRED",
+    );
+  });
+
+  it("lets an 'all' approval cover ordinary remote mutations", () => {
+    const approval = createApproval("all", "hash-1");
+    expect(() =>
+      assertCreatorApproval(
+        approval,
+        "creator-remote-publish",
+        "hash-1",
+        approval.expiresAt - 1,
+      ),
+    ).not.toThrow();
+  });
+
+  it("does not let an 'all' approval cover destructive or voice-sensitive mutations", () => {
+    const approval = createApproval("all", "hash-1");
+    expectCreatorThrow(
+      () =>
+        assertCreatorApproval(
+          approval,
+          "creator-remote-destructive",
+          "hash-1",
+          approval.expiresAt - 1,
+        ),
+      "CREATOR_APPROVAL_REQUIRED",
+    );
+    expectCreatorThrow(
+      () =>
+        assertCreatorApproval(
+          approval,
+          "creator-voice-sensitive",
+          "hash-1",
+          approval.expiresAt - 1,
+        ),
+      "CREATOR_APPROVAL_REQUIRED",
+    );
+  });
+
+  it("never throws on non-JSON-serializable results when scanning for credentials", () => {
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+    expect(() => assertNoCredentialPlaintext(circular, ["sk-abc"])).not.toThrow();
+    expect(() =>
+      assertNoCredentialPlaintext({ big: 10n }, ["sk-abc"]),
+    ).not.toThrow();
+    expect(() => assertNoCredentialPlaintext(undefined, ["sk-abc"])).not.toThrow();
+  });
+
+  it("returns the canonical workspace path for an in-workspace asset", () => {
+    const canonical = assertCreatorAssetInWorkspace(asset, workspaceRoot);
+    expect(typeof canonical).toBe("string");
+    expect(canonical.length).toBeGreaterThan(0);
+  });
+
+  it("rejects nested and kebab-case bypass flags", () => {
+    expectCreatorThrow(
+      () => assertNoBypassFlags({ download: { drmBypass: true } }),
+      "CREATOR_UNSUPPORTED_CAPABILITY",
+    );
+    expectCreatorThrow(
+      () => assertNoBypassFlags({ "drm-bypass": true }),
+      "CREATOR_UNSUPPORTED_CAPABILITY",
+    );
+  });
+
+  it("rejects a non-boolean truthy authorization value", () => {
+    expectCreatorThrow(
+      () =>
+        assertVoiceAuthorization({
+          authorized: "yes" as unknown as boolean,
+        }),
+      "CREATOR_VOICE_AUTHORIZATION_REQUIRED",
+    );
+  });
+
+  it("allows unknown rights under permissive policy", () => {
+    expect(() => assertRightsPolicy(undefined, "permissive")).not.toThrow();
+    expect(() =>
+      assertRightsPolicy({ status: "unknown" }, "permissive"),
+    ).not.toThrow();
+  });
+
+  it("enforces timeout and batch limits individually", () => {
+    expectCreatorThrow(
+      () =>
+        assertWithinResourceLimits({
+          timeoutMs: DEFAULT_NETWORK_TIMEOUT_MS + 1,
+        }),
+      "CREATOR_RESOURCE_LIMIT_EXCEEDED",
+    );
+    expectCreatorThrow(
+      () =>
+        assertWithinResourceLimits({
+          batchItems: DEFAULT_MAX_BATCH_ITEMS + 1,
+        }),
+      "CREATOR_RESOURCE_LIMIT_EXCEEDED",
+    );
+  });
+
+  it("handles empty secret lists and empty text for log redaction", () => {
+    expect(redactForLogger("no secrets here", [])).toBe("no secrets here");
+    expect(redactForLogger("", ["sk-abc"])).toBe("");
   });
 });
