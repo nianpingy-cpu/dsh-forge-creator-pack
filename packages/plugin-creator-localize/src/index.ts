@@ -9,6 +9,7 @@
 import {
   validateArgs,
   assertCreatorAssetInWorkspace,
+  assertVoiceAuthorization,
   type Plugin,
   type ToolDefinition,
   type ToolResult,
@@ -297,6 +298,7 @@ const localizeVideo: ToolDefinition = {
         enum: ["mock", "videolingo"],
         description: "mock (default) or VideoLingo-compatible",
       },
+      overwrite: { type: "boolean", description: "replace the derived output if it exists" },
     },
     required: ["subtitlePath", "sourceLanguage", "targetLanguage", "outputDir"],
   },
@@ -329,12 +331,13 @@ const localizeVideo: ToolDefinition = {
       translated.push({ ...cue, text: t.result.text });
     }
     const rel = `${String(a.outputDir)}/localized.srt`;
-    const out = resolveWorkspacePath(ctx, rel);
-    if (!out.ok) return out.result;
+    // Derived output honors the overwrite guard too (no silent clobbering).
+    const derived = resolveOutput(ctx, rel, a.overwrite === true);
+    if (!derived.ok) return derived.result;
     const srt = serializeSrt(translated);
     try {
-      mkdirSync(dirname(out.canonical), { recursive: true });
-      writeFileSync(out.canonical, srt, "utf8");
+      mkdirSync(dirname(derived.canonical), { recursive: true });
+      writeFileSync(derived.canonical, srt, "utf8");
     } catch (err) {
       return toolFailure(`failed to write localized subtitle: ${String(err)}`);
     }
@@ -380,6 +383,23 @@ const dubVideo: ToolDefinition = {
         error: {
           code: "ToolFailure",
           message: `dubbing requires an authorized voice reference; "${a.referenceId}" is not registered (register it with voice_register_reference, authorization: true)`,
+        },
+      };
+    }
+    // Defense in depth: registration enforces authorization:true, but re-assert
+    // the voice policy directly (consistent with creator-voice's own gate).
+    try {
+      assertVoiceAuthorization({
+        authorized: true,
+        authorizationNote: ref.authorizationNote,
+      });
+    } catch {
+      return {
+        ok: false,
+        summary: "voice authorization required",
+        error: {
+          code: "ToolFailure",
+          message: `voice reference ${ref.id} is not authorized for dubbing`,
         },
       };
     }
