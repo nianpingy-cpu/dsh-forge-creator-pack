@@ -10,7 +10,7 @@ import {
   type PlatformPostDraft,
   type CreatorApproval,
 } from "@dsh-forge-creator/core";
-import { __mockPublisher, MockPublisher } from "../src/providers.js";
+import { __mockPublisher } from "../src/providers.js";
 import { contentHashOf } from "../src/registry.js";
 
 let workspaceRoot: string;
@@ -189,7 +189,8 @@ describe("post_publish approval flow (CREATOR-013)", () => {
 
   it("idempotency key prevents duplicate posts", async () => {
     const draftId = await createDraft();
-    await tool("post_publish").execute(
+    const before = __mockPublisher.postCount;
+    const first = await tool("post_publish").execute(
       { draftId, approval: approvalFor(DRAFT), provider: "mock", idempotencyKey: "dup-1" },
       ctx(),
     );
@@ -197,17 +198,42 @@ describe("post_publish approval flow (CREATOR-013)", () => {
       { draftId, approval: approvalFor(DRAFT), provider: "mock", idempotencyKey: "dup-1" },
       ctx(),
     );
+    expect(first.ok).toBe(true);
     expect(second.ok).toBe(true);
-    // The mock records only one post for the same idempotency key.
-    const a = JSON.parse((await tool("post_status").execute({ draftId, provider: "mock" }, ctx())).raw!);
-    expect(a.postId).toBeTruthy();
+    // The mock records exactly ONE post for the same idempotency key, and both
+    // attempts resolve to the same post id.
+    expect(__mockPublisher.postCount - before).toBe(1);
+    const firstId = JSON.parse(first.raw!).postId;
+    const secondId = JSON.parse(second.raw!).postId;
+    expect(secondId).toBe(firstId);
+  });
+
+  it("network retry does not duplicate publish (request failed -> retry with same key creates one post)", async () => {
+    const draftId = await createDraft();
+    const before = __mockPublisher.postCount;
+    __mockPublisher.publishOutcome = "failed";
+    try {
+      const failed = await tool("post_publish").execute(
+        { draftId, approval: approvalFor(DRAFT), provider: "mock", idempotencyKey: "retry-1" },
+        ctx(),
+      );
+      expect(failed.ok).toBe(false);
+      expect(failed.error?.code).toBe("ToolFailure");
+    } finally {
+      __mockPublisher.publishOutcome = "published";
+    }
+    const retry = await tool("post_publish").execute(
+      { draftId, approval: approvalFor(DRAFT), provider: "mock", idempotencyKey: "retry-1" },
+      ctx(),
+    );
+    expect(retry.ok).toBe(true);
+    // The failed attempt recorded NOTHING; the retry created exactly one post.
+    expect(__mockPublisher.postCount - before).toBe(1);
   });
 
   it("queries remote status before resending when status is unknown (no duplicate)", async () => {
-    const unknownPublisher = new MockPublisher({ publishOutcome: "unknown" });
     const draftId = await createDraft();
-    // Publish with a key whose remote state is "unknown" -> must query status,
-    // not blindly resend. Use the unknown-configured publisher via the hook.
+    const before = __mockPublisher.postCount;
     __mockPublisher.publishOutcome = "unknown";
     try {
       const res = await tool("post_publish").execute(
@@ -215,13 +241,13 @@ describe("post_publish approval flow (CREATOR-013)", () => {
         ctx(),
       );
       expect(res.ok).toBe(true);
-      // The tool queried status and resolved to published without a second send.
-      expect(__mockPublisher.publishCallCount).toBeGreaterThanOrEqual(1);
+      // The tool queried status and resolved to published WITHOUT a second
+      // publish: only one post was created.
+      expect(__mockPublisher.postCount - before).toBe(1);
       expect(JSON.parse(res.raw!).status).toBe("published");
     } finally {
       __mockPublisher.publishOutcome = "published";
     }
-    expect(unknownPublisher).toBeTruthy();
   });
 
   it("credentials never appear in any result", async () => {

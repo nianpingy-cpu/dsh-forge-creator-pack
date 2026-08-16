@@ -352,7 +352,7 @@ const postPublish: ToolDefinition = {
       updateDraft(record.id, { status: attempt.result.status, postId: attempt.result.postId });
       return success(
         `published as ${attempt.result.postId}`,
-        JSON.stringify({ status: attempt.result.status, postId: attempt.result.postId }),
+        redactCredentials(JSON.stringify({ status: attempt.result.status, postId: attempt.result.postId })),
       );
     }
     if (attempt.result.status === "unknown") {
@@ -363,7 +363,7 @@ const postPublish: ToolDefinition = {
         updateDraft(record.id, { status: q.result.status, postId: q.result.postId });
         return success(
           `remote status resolved: ${q.result.status}`,
-          JSON.stringify({ status: q.result.status, postId: q.result.postId }),
+          redactCredentials(JSON.stringify({ status: q.result.status, postId: q.result.postId })),
         );
       }
       return {
@@ -426,7 +426,7 @@ const postSchedule: ToolDefinition = {
     updateDraft(record.id, { status: "scheduled", scheduledAt: String(a.scheduledAt), postId: attempt.result.postId });
     return success(
       `scheduled ${record.id} for ${a.scheduledAt}`,
-      JSON.stringify({ postId: attempt.result.postId, status: "scheduled", scheduledAt: a.scheduledAt }),
+      redactCredentials(JSON.stringify({ postId: attempt.result.postId, status: "scheduled", scheduledAt: a.scheduledAt })),
     );
   },
 };
@@ -457,7 +457,7 @@ const postStatus: ToolDefinition = {
       if (!record) return toolFailure(`unknown draft ${a.draftId}`);
       return success(
         `${record.id}: ${record.status}`,
-        JSON.stringify({ draftId: record.id, status: record.status, postId: record.postId }),
+        redactCredentials(JSON.stringify({ draftId: record.id, status: record.status, postId: record.postId })),
       );
     }
     if (a.postId !== undefined) {
@@ -466,7 +466,7 @@ const postStatus: ToolDefinition = {
         if (record.postId === String(a.postId)) {
           return success(
             `${a.postId}: ${record.status}`,
-            JSON.stringify({ draftId: record.id, status: record.status, postId: record.postId }),
+            redactCredentials(JSON.stringify({ draftId: record.id, status: record.status, postId: record.postId })),
           );
         }
       }

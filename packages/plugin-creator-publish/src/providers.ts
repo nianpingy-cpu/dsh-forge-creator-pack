@@ -59,12 +59,19 @@ export interface PublisherProvider {
 }
 
 export interface MockPublisherOptions {
-  /** When "unknown", publish records the post but reports status unknown. */
-  publishOutcome?: "published" | "unknown";
+  /**
+   * "published": publish records + reports published.
+   * "unknown": publish records but reports status unknown (exercises
+   *             query-before-resend).
+   * "failed": publish records NOTHING and reports a request failure
+   *           (exercises the safe-retry path; a retry with the same key
+   *           must not duplicate the post).
+   */
+  publishOutcome?: "published" | "unknown" | "failed";
 }
 
 export class MockPublisher implements PublisherProvider {
-  publishOutcome: "published" | "unknown";
+  publishOutcome: "published" | "unknown" | "failed";
   publishCallCount = 0;
   postCount = 0;
   private readonly posts = new Map<
@@ -93,6 +100,11 @@ export class MockPublisher implements PublisherProvider {
     const existing = this.posts.get(idempotencyKey);
     if (existing) {
       return { ok: true, result: { postId: existing.postId, status: existing.status } };
+    }
+    // A simulated request failure records NOTHING, so a retry with the same
+    // key never duplicates the post.
+    if (this.publishOutcome === "failed") {
+      return { ok: true, result: { postId: `post-${this.postCount + 1}`, status: "failed", error: "request failed (simulated)" } };
     }
     this.postCount += 1;
     const postId = `post-${this.postCount}`;
