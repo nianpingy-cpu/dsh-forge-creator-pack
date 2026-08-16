@@ -20,6 +20,9 @@ importers:
       '@dsh-forge-creator/plugin-creator-transcribe':
         specifier: workspace:*
         version: link:packages/plugin-creator-transcribe
+      '@dsh-forge-creator/plugin-ffmpeg':
+        specifier: workspace:*
+        version: link:packages/plugin-ffmpeg
       '@eslint/js':
         specifier: ^9.30.0
         version: 9.39.5
@@ -78,6 +81,16 @@ importers:
         version: 8.5.1(postcss@8.5.26)(typescript@5.9.3)
 
   packages/plugin-creator-transcribe:
+    dependencies:
+      '@dsh-forge-creator/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(postcss@8.5.26)(typescript@5.9.3)
+
+  packages/plugin-ffmpeg:
     dependencies:
       '@dsh-forge-creator/core':
         specifier: workspace:*
