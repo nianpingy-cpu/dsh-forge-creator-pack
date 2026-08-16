@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+*.wav
+*.mp4
+*.mp3
+!packages/**/tests/fixtures/**/*.wav
+!packages/**/tests/fixtures/**/*.mp4
+!packages/**/tests/fixtures/**/*.mp3

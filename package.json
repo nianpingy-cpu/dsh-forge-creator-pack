@@ -1,0 +1,36 @@
+{
+  "name": "dsh-forge-creator-pack",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Creator Pack for DeepSeek Harness: from topic discovery and licensed capture to transcription, short-form production and controlled multi-platform publishing",
+  "license": "MIT",
+  "packageManager": "pnpm@11.4.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "build": "pnpm -r run build",
+    "clean": "pnpm -r exec rimraf dist coverage || true"
+  },
+  "devDependencies": {
+    "@dsh-forge-creator/core": "workspace:*",
+    "@eslint/js": "^9.30.0",
+    "@types/estree": "^1.0.7",
+    "@types/node": "^24.13.3",
+    "@vitest/coverage-v8": "^3.2.0",
+    "eslint": "^9.30.0",
+    "prettier": "^3.6.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.0",
+    "typescript-eslint": "^8.35.0",
+    "vitest": "^3.2.0"
+  }
+}
