@@ -64,3 +64,6 @@ jobs:
 
       - name: Lint creator skills (CREATOR-014)
         run: node scripts/creator-skill-lint.ts
+
+      - name: Creator release gate (CREATOR-016)
+        run: node scripts/creator-release-gate.ts
