@@ -1,8 +1,8 @@
 # PROJECT_STATUS
 
 Current Version: 0.1.0 (bootstrap — no tag yet)
-Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-006)
-Current Issue: CREATOR-006 MERGED — creator-transcribe (PR #12)
+Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-007)
+Current Issue: CREATOR-007 MERGED — creator-clips (PR #14)
 
 ## Completed (merged + closed with evidence)
 
@@ -41,10 +41,19 @@ Current Issue: CREATOR-006 MERGED — creator-transcribe (PR #12)
   (header-only read), permission gates, timeout/redaction. 25 tests. External
   review APPROVE after 2 rounds (B1 subtitle-injection closed via regression
   TDD; reviewer-recommended whisper sidecar + JSON-shape cleanup applied).
+- **CREATOR-007 creator-clips** (PR #14): 8 tools (clip_by_time …
+  merge_segments). Carried in `@dsh-forge/plugin-ffmpeg` (MIT) as
+  `@dsh-forge-creator/plugin-ffmpeg` (REUSE — attribution preserved, no
+  reimplementation) and extended with 3 fixed typed operations
+  (video_vertical/video_square with real output-ratio verification via
+  ffprobe, silence_remove). `plugin-creator-clips` is a pure orchestration
+  layer (no ffmpeg argv, no free-form params) composing the adapter; RED
+  range/duration/collision/aspect/no-shell tests. Core gained backward
+  compatible `runnerByTool` + union value types. 21 clips + 72 adapter tests.
+  External review APPROVE (1 round, no blocking findings).
 
 ## In progress / planned
 
-- CREATOR-007 creator-clips
 - CREATOR-008 creator-short-video
 - CREATOR-009 creator-cover
 - CREATOR-010 creator-voice
