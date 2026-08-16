@@ -35,7 +35,7 @@ const SECRET_PATTERNS: readonly SecretPattern[] = [
   { name: "google-api-key", re: /AIza[0-9A-Za-z_-]{30,}/ },
   { name: "jwt", re: /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/ },
   { name: "private-key", re: /-----BEGIN (?:[A-Z ]+ )?PRIVATE KEY-----/ },
-  { name: "authorization-header", re: /["']Authorization["']\s*:\s*["'](?:Bearer|Basic)\s+[^"']{10,}/i },
+  { name: "authorization-header", re: /(?:["']?Authorization["']?)\s*:\s*["'](?:Bearer|Basic)\s+[^"']{10,}/i },
   {
     name: "credential-assignment",
     re: /\b(?:api[_-]?key|api[_-]?secret|access[_-]?token|auth[_-]?token|refresh[_-]?token|password|passwd|cookie|client[_-]?secret)\b\s*[:=]\s*["'][^"']{8,}["']/i,
@@ -74,6 +74,9 @@ function collectFiles(dir: string, out: string[] = []): string[] {
     if (entry.isDirectory()) {
       if (!SKIP_DIRS.has(entry.name)) collectFiles(join(dir, entry.name), out);
     } else {
+      // Skip .git even when it is a file (a git worktree pointer), which
+      // contains an absolute path to the main gitdir.
+      if (entry.name === ".git") continue;
       out.push(join(dir, entry.name));
     }
   }

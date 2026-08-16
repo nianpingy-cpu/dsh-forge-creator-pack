@@ -8,7 +8,7 @@ cd dsh-forge-creator-pack
 pnpm install
 pnpm typecheck
 pnpm lint
-pnpm test      # 435 unit + contract + integration + e2e tests
+pnpm test      # 438 unit + contract + integration + e2e tests
 pnpm build
 node scripts/creator-release-gate.ts   # pre-tag gate (must print "ok: ready to tag")
 ```

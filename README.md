@@ -31,7 +31,7 @@ Entry points: [docs/creator/README.md](docs/creator/README.md) (index),
 [PROVIDERS](docs/creator/PROVIDERS.md), [EXAMPLES](docs/creator/EXAMPLES.md),
 [RELEASE_NOTES](docs/creator/RELEASE_NOTES.md).
 
-## Plugins (planned)
+## Plugins
 
 | Logical ID | Plugin | Purpose |
 |---|---|---|
