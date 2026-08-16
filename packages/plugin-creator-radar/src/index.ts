@@ -9,11 +9,10 @@
  *   trend_search        (read)  search topics by keyword
  *   topic_score         (read)  score one topic with evidence + uncertainty
  *   topic_compare       (read)  compare two topics
- *   topic_history       (read)  topic history (mock)
+ *   topic_history       (read)  topic history (evidence-derived)
  *   topic_velocity      (read)  velocity estimate (evidence-backed)
  *   competitor_watch    (read)  competitor topics for a query
  *   opportunity_rank    (read)  rank topics by opportunity
- *   radar_probe         (read)  probe external radar CLI availability
  *
  * (RED — normalization/providers are stubs; tools return ToolFailure until
  * GREEN implements them.)
