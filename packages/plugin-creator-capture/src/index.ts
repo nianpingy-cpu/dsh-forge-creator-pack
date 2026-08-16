@@ -277,6 +277,17 @@ async function runDownload(
       },
     );
   }
+  // Workspace-write execution requires DSH approval (B1).
+  if (!(ctx.permission?.approved === true)) {
+    return {
+      ok: false,
+      summary: "permission denied",
+      error: {
+        code: "PermissionDenied",
+        message: "capture downloads require approval (workspace-write)",
+      },
+    };
+  }
   let exec: ExecutionResult;
   try {
     exec = await ctx.run({
@@ -285,6 +296,7 @@ async function runDownload(
       cwd: ctx.workspaceRoot,
       timeoutMs: 300_000,
       maxOutputBytes: 20 * 1024 * 1024,
+      redact: [spec.sourceUrl],
     });
   } catch (err) {
     return toolFailure(`yt-dlp runner threw: ${String(err)}`);
@@ -377,11 +389,6 @@ const baseDownloadProps: Record<string, PropertySpec> = {
   dryRun: { type: "boolean", description: "preview argv without executing" },
 };
 
-const RIGHT_CONFIRMED: RightsConfirmation = {
-  status: "owned",
-  note: "creator-owned test asset",
-};
-
 /** Factory for the four download tools to avoid schema duplication. */
 function makeDownloadTool(
   kind: CaptureKind,
@@ -404,12 +411,19 @@ function makeDownloadTool(
       const bad = validate(schema, args);
       if (bad) return bad;
       const a = args as Record<string, unknown>;
+      // Explicit rights confirmation is mandatory — never default to owned (B2).
+      const rights = a.rights as RightsConfirmation | null | undefined;
+      if (!rights || typeof rights !== "object") {
+        return invalid(
+          "rights confirmation is required (status owned/licensed/public-domain/permission-confirmed)",
+        );
+      }
       return runDownload(ctx, {
         sourceUrl: String(a.sourceUrl),
         outputPath: String(a.outputPath),
         kind,
         conflict: a.conflict as ConflictPolicy,
-        rights: (a.rights as RightsConfirmation) ?? RIGHT_CONFIRMED,
+        rights,
         playlistLimit: a.playlistLimit as number | undefined,
         subtitleLang: a.subtitleLang as string | undefined,
         format: a.format as string | undefined,
@@ -498,6 +512,23 @@ const playlistDownload: ToolDefinition = {
     const bad = validate(playlistDownload.inputSchema, args);
     if (bad) return bad;
     const a = args as Record<string, unknown>;
+    // Explicit rights confirmation is mandatory (B3).
+    const rights = a.rights as RightsConfirmation | null | undefined;
+    try {
+      if (!rights || typeof rights !== "object") {
+        throw new Error("rights confirmation is required");
+      }
+      assertRightsPolicy(rights, "strict");
+    } catch (err) {
+      return {
+        ok: false,
+        summary: "rights required",
+        error: {
+          code: errorCodeOf(err, "ToolFailure"),
+          message: errorMessageOf(err, "rights confirmation required"),
+        },
+      };
+    }
     const outputDir = String(a.outputDir);
     let canonical: string;
     try {
@@ -516,17 +547,40 @@ const playlistDownload: ToolDefinition = {
       };
     }
     const limit = (a.playlistLimit as number | undefined) ?? 10;
+    try {
+      assertWithinResourceLimits({ batchItems: limit });
+    } catch (err) {
+      return {
+        ok: false,
+        summary: "resource limit exceeded",
+        error: {
+          code: errorCodeOf(err, "ToolFailure"),
+          message: errorMessageOf(err, "playlist exceeds the batch limit"),
+        },
+      };
+    }
     const argv = buildPlaylistArgv(
       String(a.sourceUrl),
       canonical,
       limit,
       true,
+      a.conflict as ConflictPolicy,
     );
     if (a.dryRun) {
       return success(`dry-run: would download playlist to ${canonical}`, {
         outputDir: canonical,
         argv,
       });
+    }
+    if (!(ctx.permission?.approved === true)) {
+      return {
+        ok: false,
+        summary: "permission denied",
+        error: {
+          code: "PermissionDenied",
+          message: "playlist downloads require approval (workspace-write)",
+        },
+      };
     }
     let exec: ExecutionResult;
     try {

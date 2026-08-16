@@ -99,6 +99,7 @@ export function buildPlaylistArgv(
   outputPath: string,
   limit?: number,
   download = false,
+  conflict?: ConflictPolicy,
 ): string[] {
   const argv: string[] = [sourceUrl];
   if (download) {
@@ -108,6 +109,13 @@ export function buildPlaylistArgv(
   }
   if (limit !== undefined && limit > 0) {
     argv.push("--playlist-items", `1-${limit}`);
+  }
+  if (download) {
+    if (conflict === "overwrite-approved") {
+      argv.push("--force-overwrites");
+    } else {
+      argv.push("--no-overwrites");
+    }
   }
   argv.push("--flat-playlist");
   if (!download) argv.push("-J");
