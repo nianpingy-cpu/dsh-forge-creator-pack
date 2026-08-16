@@ -51,8 +51,8 @@ export function parseSrt(text: string): SrtParseOutcome {
     if (!m) {
       return { ok: false, message: `invalid cue timing: ${timing}` };
     }
-    const start = parseTime(m[1]);
-    const end = parseTime(m[2]);
+    const start = parseTime(m[1]!);
+    const end = parseTime(m[2]!);
     if (start === undefined || end === undefined) {
       return { ok: false, message: `invalid timestamp in cue ${idx}` };
     }

@@ -230,17 +230,17 @@ describe("contract suite (CREATOR-011)", () => {
             inputPath: "source.srt",
             sourceLanguage: "en",
             targetLanguage: "fr",
-            outputPath: "o.srt",
+            outputPath: "tr.srt",
             provider: "mock",
           },
           invalid: { inputPath: 42 },
         },
         subtitle_align: {
-          valid: { inputPath: "source.srt", offsetMs: 100, outputPath: "o.srt" },
+          valid: { inputPath: "source.srt", offsetMs: 100, outputPath: "al.srt" },
           invalid: { offsetMs: "x" },
         },
         subtitle_resegment: {
-          valid: { inputPath: "source.srt", maxDurationMs: 1000, outputPath: "o.srt" },
+          valid: { inputPath: "source.srt", maxDurationMs: 1000, outputPath: "rs.srt" },
           invalid: { maxDurationMs: "x" },
         },
         localize_video: {
