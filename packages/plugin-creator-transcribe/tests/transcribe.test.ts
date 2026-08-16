@@ -112,6 +112,51 @@ describe("subtitle rendering (CREATOR-006)", () => {
     expect(ass).toContain("[Script Info]");
     expect(ass).toContain("Dialogue:");
   });
+
+  it("sanitizes transcript text against SRT cue injection", () => {
+    const evil: TranscriptSegment[] = [
+      {
+        id: 0,
+        startMs: 0,
+        endMs: 1000,
+        text: "normal\n\n2\n00:00:10,000 --> 00:00:11,000\nspoofed",
+      },
+    ];
+    const srt = toSrt(evil);
+    // Only one real cue survives; the injected timestamp cannot create a new cue.
+    expect(parseSrtCues(srt).length).toBe(1);
+  });
+
+  it("sanitizes transcript text against VTT NOTE/STYLE injection", () => {
+    const evil: TranscriptSegment[] = [
+      {
+        id: 0,
+        startMs: 0,
+        endMs: 1000,
+        text: "NOTE injected note\nSTYLE ::cue { color: red }",
+      },
+    ];
+    const vtt = toVtt(evil);
+    expect(vtt).not.toContain("::cue");
+    // WEBVTT header + one cue block only.
+    expect(vtt.trim().split("\n\n").length).toBe(2);
+  });
+
+  it("sanitizes transcript text against ASS override-tag injection", () => {
+    const evil: TranscriptSegment[] = [
+      {
+        id: 0,
+        startMs: 0,
+        endMs: 1000,
+        text: "hi {\\pos(0,0)} {\\alpha&HFF&}\n[Events]",
+      },
+    ];
+    const ass = toAss(evil);
+    expect(ass).not.toContain("{\\pos");
+    expect(ass).not.toContain("\\alpha");
+    // Only the real [Events] section header appears once.
+    expect(ass.split("[Events]").length - 1).toBe(1);
+  });
 });
 
 describe("audio flow (CREATOR-006)", () => {
