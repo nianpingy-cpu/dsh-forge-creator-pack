@@ -209,7 +209,9 @@ describe("capture hardening (external review findings)", () => {
     expect(res.ok).toBe(false);
   });
 
-  it("rejects playlist_download over the batch limit (B4)", async () => {
+  it("caps playlist_download batch size at the limit (B4)", async () => {
+    // An oversized playlistLimit is clamped to the 50-item cap — never
+    // unbounded.
     const res = await tool("playlist_download").execute(
       {
         sourceUrl: "https://example.invalid/p",
@@ -221,7 +223,9 @@ describe("capture hardening (external review findings)", () => {
       },
       ctx(),
     );
-    expect(res.ok).toBe(false);
+    expect(res.ok).toBe(true);
+    const payload = JSON.parse(res.raw!) as { argv: string[] };
+    expect(payload.argv.join(" ")).toContain("1-50");
   });
 
   it("rejects playlist_download with a non-positive playlist limit (B4)", async () => {

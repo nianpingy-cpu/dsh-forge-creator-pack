@@ -546,7 +546,14 @@ const playlistDownload: ToolDefinition = {
         },
       };
     }
-    const limit = (a.playlistLimit as number | undefined) ?? 10;
+    const requestedLimit = a.playlistLimit as number | undefined;
+    if (
+      requestedLimit !== undefined &&
+      (!Number.isInteger(requestedLimit) || requestedLimit < 1)
+    ) {
+      return invalid("playlistLimit must be a positive integer");
+    }
+    const limit = Math.min(requestedLimit ?? 10, 50);
     try {
       assertWithinResourceLimits({ batchItems: limit });
     } catch (err) {
@@ -590,6 +597,7 @@ const playlistDownload: ToolDefinition = {
         cwd: ctx.workspaceRoot,
         timeoutMs: 600_000,
         maxOutputBytes: 20 * 1024 * 1024,
+        redact: [String(a.sourceUrl)],
       });
     } catch (err) {
       return toolFailure(`yt-dlp runner threw: ${String(err)}`);
