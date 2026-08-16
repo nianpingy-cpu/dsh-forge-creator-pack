@@ -69,6 +69,10 @@ function resolveOutputPath(
   path: string,
 ): { ok: true; canonical: string } | { ok: false; result: ToolResult } {
   try {
+    // NOTE: the canonical path is validated here (realpath-safe, no `..`).
+    // A real OpenVoice adapter that writes audio MUST bind writes to this
+    // canonical path (not the raw outputPath) to close the check-then-use
+    // gap; the current mock only returns the path.
     const canonical = assertCreatorAssetInWorkspace(
       { path } as CreatorAsset,
       ctx.workspaceRoot,
