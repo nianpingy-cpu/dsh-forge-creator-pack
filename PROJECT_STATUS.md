@@ -1,8 +1,8 @@
 # PROJECT_STATUS
 
 Current Version: 0.1.0 (bootstrap — no tag yet)
-Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-007)
-Current Issue: CREATOR-007 MERGED — creator-clips (PR #14)
+Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-008)
+Current Issue: CREATOR-008 MERGED — creator-short-video (PR #16)
 
 ## Completed (merged + closed with evidence)
 
@@ -51,10 +51,18 @@ Current Issue: CREATOR-007 MERGED — creator-clips (PR #14)
   range/duration/collision/aspect/no-shell tests. Core gained backward
   compatible `runnerByTool` + union value types. 21 clips + 72 adapter tests.
   External review APPROVE (1 round, no blocking findings).
+- **CREATOR-008 creator-short-video** (PR #16): 5 tools (short_video_plan …
+  short_video_preview), centralized Plan Schema (script/aspectRatio/
+  durationTarget/voiceMode/subtitleMode/assetStrategy/outputDir), deterministic
+  mock with a shared module-level job store (plan -> generate -> status ->
+  assets E2E), MoneyPrinterTurbo-compatible provider adapter (MIT, no
+  vendoring, unconfigured -> typed ToolFailure), bounded status polling with
+  typed Timeout, workspace-bounded outputDir, no external-URL/credential leak.
+  20 tests. External review APPROVE (1 round + NB cleanup: dead code removed,
+  permission-denied test added).
 
 ## In progress / planned
 
-- CREATOR-008 creator-short-video
 - CREATOR-009 creator-cover
 - CREATOR-010 creator-voice
 - CREATOR-011 creator-localize
