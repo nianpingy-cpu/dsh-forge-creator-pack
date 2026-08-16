@@ -12,6 +12,13 @@ export interface CoverRecord {
 
 const records = new Map<string, CoverRecord>();
 
+// NOTE: records are keyed by the workspace-relative path exactly as passed to
+// the producing tool (not the canonical realpath). The pre-seeded sample uses
+// the relative name "fixture.png" because the workspace root is dynamic at
+// module load. Callers must use a consistent path spelling across
+// produce/validate (the built-in tools and tests do). Hardening via canonical
+// keys would require seeding per-workspace and is tracked as a follow-up.
+
 // Pre-seeded sample record (a "fixture" cover at x-image dimensions) so
 // stateless cover_validate checks in the contract suite are deterministic.
 recordCover("fixture.png", 1600, 900);

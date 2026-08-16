@@ -124,10 +124,13 @@ const coverGenerateBackground: ToolDefinition = {
     const a = args as Record<string, unknown>;
     const out = resolveWorkspacePath(ctx, String(a.outputPath));
     if (!out.ok) return out.result;
+    // Background defaults derive from the youtube-thumbnail profile (no
+    // scattered dimension literals).
+    const defaultProfile = getProfile("youtube-thumbnail");
     const width =
-      typeof a.width === "number" ? Math.floor(a.width) : 1280;
+      typeof a.width === "number" ? Math.floor(a.width) : (defaultProfile?.width ?? 1280);
     const height =
-      typeof a.height === "number" ? Math.floor(a.height) : 720;
+      typeof a.height === "number" ? Math.floor(a.height) : (defaultProfile?.height ?? 720);
     if (width <= 0 || height <= 0) {
       return invalid("width and height must be positive");
     }
