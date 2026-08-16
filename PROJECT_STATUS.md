@@ -2,17 +2,21 @@
 
 Current Version: 0.1.0 (bootstrap — no tag yet)
 Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-006)
-Current Issue: bootstrap committed
+Current Issue: CREATOR-001 MERGED — Ecosystem & Overlap Lock (PR #2)
 
 ## Completed (merged + closed with evidence)
 
 - bootstrap monorepo skeleton: adapted `@dsh-forge-creator/core` (from
   `@dsh-forge/core`, MIT), root gates (typecheck/lint/test/build), CI, docs/creator,
   AGENTS.md, README, no-shell ESLint rule + regression tests
+- **CREATOR-001 Ecosystem & Overlap Lock** (PR #2): `docs/creator/ecosystem.json`
+  (20 capability rows) + ECOSYSTEM_MATRIX / UPSTREAM_LICENSES /
+  BUILD_REUSE_DECISIONS, validator `scripts/creator-ecosystem-check.ts`,
+  `tests/creator-ecosystem.test.ts` (11 tests), `creator-contract` CI job.
+  External review APPROVE (2 rounds, no blocking findings).
 
 ## In progress / planned
 
-- CREATOR-001 Ecosystem & Overlap Lock
 - CREATOR-002 Creator Core Contracts
 - CREATOR-003 Creator Safety Policy
 - CREATOR-004 creator-radar
