@@ -5,6 +5,7 @@ import {
   loadEcosystemMatrix,
   validateEcosystemMatrix,
   REQUIRED_CREATOR_CAPABILITIES,
+  type EcosystemEntry,
 } from "../scripts/creator-ecosystem-check.js";
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -110,6 +111,8 @@ describe("validator hardening (external review findings)", () => {
     // produce a diagnostic, not a TypeError.
     const entries = loadEcosystemMatrix(REPO_ROOT);
     const [head] = entries;
+    // A malformed runtime row (license key missing) — cast to simulate
+    // untrusted data crossing the JSON boundary.
     const broken = {
       capability: "fixture-broken",
       existingDshOverlap: head!.existingDshOverlap,
@@ -119,7 +122,7 @@ describe("validator hardening (external review findings)", () => {
       decision: "DO NOT BUILD" as const,
       risk: head!.risk,
       // license key intentionally missing
-    };
+    } as unknown as EcosystemEntry;
     expect(() =>
       validateEcosystemMatrix([broken, ...entries]),
     ).not.toThrow();
