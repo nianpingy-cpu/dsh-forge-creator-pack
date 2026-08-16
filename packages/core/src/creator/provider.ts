@@ -11,5 +11,10 @@ export function providerSupports(
   provider: CreatorProvider,
   capability: string,
 ): boolean {
-  return provider.capabilities.includes(capability);
+  return (
+    !!provider &&
+    typeof provider === "object" &&
+    Array.isArray(provider.capabilities) &&
+    provider.capabilities.includes(capability)
+  );
 }

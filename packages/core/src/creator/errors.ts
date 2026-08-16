@@ -18,6 +18,15 @@ export function creatorError(
   return { code, message, context };
 }
 
+/** Remove stack-frame lines ("    at file.ts:1:1") from a message. */
+function stripStackFrames(message: string): string {
+  return message
+    .split("\n")
+    .filter((line) => !/^\s+at\s/.test(line))
+    .join("\n")
+    .trim();
+}
+
 /**
  * Normalize any thrown value into a CreatorError. Never propagates a raw
  * stack trace; unknown errors collapse to a stable fallback code.
@@ -27,14 +36,22 @@ export function normalizeCreatorError(
   fallbackMessage = "creator operation failed",
 ): CreatorError {
   if (err && typeof err === "object" && "code" in err && "message" in err) {
-    const candidate = err as { code: unknown; message: unknown };
+    const candidate = err as {
+      code: unknown;
+      message: unknown;
+      context?: unknown;
+    };
     if (
       typeof candidate.code === "string" &&
       (CREATOR_ERROR_CODES as readonly string[]).includes(candidate.code)
     ) {
       return {
         code: candidate.code as CreatorErrorCode,
-        message: String(candidate.message),
+        message: stripStackFrames(String(candidate.message)),
+        context:
+          candidate.context && typeof candidate.context === "object"
+            ? (candidate.context as Record<string, unknown>)
+            : undefined,
       };
     }
   }

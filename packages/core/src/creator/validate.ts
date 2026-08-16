@@ -26,12 +26,21 @@ function inList(list: readonly string[], value: string): boolean {
   return (list as readonly string[]).includes(value);
 }
 
-/** Validate a CreatorAsset: id, type, workspace-bounded path, non-empty checksum. */
+/**
+ * Validate a CreatorAsset: id, type, workspace-bounded path, non-empty checksum.
+ *
+ * NOTE: validation confirms the path is inside the workspace; callers that
+ * write the file must still re-resolve the canonical path via
+ * `resolveInWorkspace` at write time (symlink-swap guard).
+ */
 export function validateCreatorAsset(
   asset: CreatorAsset,
   workspaceRoot: string,
 ): ValidationResult<CreatorAsset> {
   const errors: string[] = [];
+  if (!asset || typeof asset !== "object") {
+    return { ok: false, errors: ["asset must be an object"] };
+  }
   if (typeof asset.id !== "string" || asset.id.trim() === "") {
     errors.push("asset.id is required");
   }
@@ -53,7 +62,7 @@ export function validateCreatorAsset(
       errors.push("asset.path escapes the workspace boundary");
     }
   }
-  if (asset.rights) {
+  if (asset.rights && typeof asset.rights === "object") {
     const r = validateRights(asset.rights);
     if (!r.ok) errors.push(...r.errors.map((e) => `rights: ${e}`));
   }
@@ -65,23 +74,32 @@ export function validateRights(
   rights: RightsMetadata,
 ): { ok: true } | { ok: false; errors: string[] } {
   const errors: string[] = [];
+  if (!rights || typeof rights !== "object") {
+    return { ok: false, errors: ["rights must be an object"] };
+  }
   if (!inList(RIGHTS_STATUSES, rights.status)) {
     errors.push(`invalid rights.status: ${String(rights.status)}`);
   }
   return errors.length === 0 ? { ok: true } : { ok: false, errors };
 }
 
-/** Validate a PlatformPostDraft: platform + media that are all valid assets. */
+/**
+ * Validate a PlatformPostDraft: platform + media elements (when present) that
+ * are all valid assets. A text-only draft (empty media) is permitted.
+ */
 export function validatePlatformPostDraft(
   draft: PlatformPostDraft,
   workspaceRoot: string,
 ): { ok: true; value: PlatformPostDraft } | { ok: false; errors: string[] } {
   const errors: string[] = [];
+  if (!draft || typeof draft !== "object") {
+    return { ok: false, errors: ["draft must be an object"] };
+  }
   if (typeof draft.platform !== "string" || draft.platform.trim() === "") {
     errors.push("draft.platform is required");
   }
-  if (!Array.isArray(draft.media) || draft.media.length === 0) {
-    errors.push("draft.media must be a non-empty array");
+  if (!Array.isArray(draft.media)) {
+    errors.push("draft.media must be an array");
   } else {
     for (const media of draft.media) {
       const r = validateCreatorAsset(media, workspaceRoot);
@@ -105,6 +123,9 @@ export function validatePublishResult(
   result: PublishResult,
 ): { ok: true; value: PublishResult } | { ok: false; errors: string[] } {
   const errors: string[] = [];
+  if (!result || typeof result !== "object") {
+    return { ok: false, errors: ["result must be an object"] };
+  }
   if (typeof result.platform !== "string" || result.platform.trim() === "") {
     errors.push("result.platform is required");
   }
@@ -121,8 +142,8 @@ export function validatePublishResult(
  */
 export function serializeCredentialRef(ref: CredentialRef): string {
   return JSON.stringify({
-    provider: String(ref.provider ?? ""),
-    key: String(ref.key ?? ""),
+    provider: String(ref?.provider ?? ""),
+    key: String(ref?.key ?? ""),
   });
 }
 
