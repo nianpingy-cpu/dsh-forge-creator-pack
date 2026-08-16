@@ -41,12 +41,15 @@ export interface ToolResult {
   error?: ToolError;
 }
 
+export type SchemaValueType = "string" | "number" | "boolean" | "array" | "object";
+
 export interface InputSchema {
   type: "object";
   properties: Record<
     string,
     {
-      type: "string" | "number" | "boolean" | "array" | "object";
+      /** Single accepted value type, or a union of accepted value types. */
+      type: SchemaValueType | readonly SchemaValueType[];
       description?: string;
       enum?: readonly string[];
       items?: { type: string };
@@ -103,10 +106,12 @@ export function validateArgs(
       return { ok: false, error: `unknown field: ${key}` };
     }
     const actualType = Array.isArray(value) ? "array" : typeof value;
-    if (actualType !== spec.type) {
+    const accepted =
+      typeof spec.type === "string" ? [spec.type] : [...spec.type];
+    if (!accepted.includes(actualType as SchemaValueType)) {
       return {
         ok: false,
-        error: `field ${key} must be ${spec.type}, got ${actualType}`,
+        error: `field ${key} must be ${accepted.join(" or ")}, got ${actualType}`,
       };
     }
     if (spec.enum && !spec.enum.includes(String(value))) {
