@@ -1,8 +1,8 @@
 # PROJECT_STATUS
 
 Current Version: 0.1.0 (bootstrap — no tag yet)
-Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-009)
-Current Issue: CREATOR-009 MERGED — creator-cover (PR #18)
+Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-010)
+Current Issue: CREATOR-010 MERGED — creator-voice (PR #20)
 
 ## Completed (merged + closed with evidence)
 
@@ -68,10 +68,17 @@ Current Issue: CREATOR-009 MERGED — creator-cover (PR #18)
   cover_variants -> validate -> CreatorAsset[] acceptance. 21 tests. External
   review APPROVE (1 round + NB cleanup: background default derived from
   profile, store keying documented).
+- **CREATOR-010 creator-voice** (PR #20): 6 tools (voice_register_reference …
+  voice_preview), mandatory authorization model (authorization: true, note
+  optional), reference metadata = source/owner/checksum/createdAt (no
+  biometrics), authorized-reference-only clone/transfer (no impersonation
+  bypass), workspace-bounded outputs, credential redaction on all outputs,
+  deterministic mock + OpenVoice-compatible external adapter (no vendoring).
+  16 tests. External review APPROVE (1 round + NB comment: canonical-path
+  binding documented for the future real provider).
 
 ## In progress / planned
 
-- CREATOR-010 creator-voice
 - CREATOR-011 creator-localize
 - CREATOR-012 creator-motion
 - CREATOR-013 creator-publish
