@@ -1,8 +1,8 @@
 # PROJECT_STATUS
 
 Current Version: 0.1.0 (bootstrap — no tag yet)
-Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-013)
-Current Issue: CREATOR-013 MERGED — creator-publish (PR #26)
+Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-014)
+Current Issue: CREATOR-014 MERGED — Creator Skills (PR #28)
 
 ## Completed (merged + closed with evidence)
 
@@ -103,9 +103,20 @@ Current Issue: CREATOR-013 MERGED — creator-publish (PR #26)
   unconfigured adapters, no vendoring, no browser anti-detection in core).
   20 tests. External review APPROVE (1 round + NB hardening: failed-outcome
   retry test, strengthened idempotency/unknown assertions, status redaction).
+- **CREATOR-014 Creator Skills** (PR #28): 7 skills under `skills/creator/`
+  (topic-to-outline, short-video-script, platform-repurpose,
+  xiaohongshu-writing, bilibili-metadata, youtube-metadata, creator-humanize)
+  — each with Purpose + 8 required sections (Trigger/Inputs/Workflow/Tool
+  preference/Quality checklist/Platform constraints/Failure/Do-not-do),
+  referencing only REGISTERED_TOOLS and teaching no approval-bypass / secret-
+  read / guaranteed-traffic guidance. `scripts/creator-skill-lint.ts` enforces
+  this (exact-Purpose heading check, CRLF normalization), gated in the CI
+  `creator-contract` job; `.gitattributes` pins skills to LF. `tests/creator-
+  skill.test.ts`: 7 tests incl. 5 bad-guidance fixtures rejected for their
+  exact rule. Strict TDD RED (481ddac) -> GREEN (ef0e389) -> REFACTOR
+  (8d62044). External review APPROVE (1 round, no blocking findings).
 
 ## In progress / planned
 
-- CREATOR-014 Creator Skills
 - CREATOR-015 Presets + E2E Stories
 - CREATOR-016 Release Hardening (v0.1.0 release)
