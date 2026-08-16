@@ -20,6 +20,7 @@ import {
   type CredentialRef,
   type PlatformPostDraft,
   type PublishResult,
+  type CreatorProvider,
 } from "../src/creator/index.js";
 
 let workspaceRoot: string;
@@ -154,12 +155,13 @@ describe("PlatformPostDraft (CREATOR-002)", () => {
     expect(errorsOf(r).join("\n")).toContain("media");
   });
 
-  it("rejects a draft with no media", () => {
+  it("accepts a draft with no media (text-only post)", () => {
+    // Spec only requires media elements (when present) to be valid assets.
     const r = validatePlatformPostDraft(
-      { platform: "x", media: [] },
+      { platform: "x", media: [], text: "hello" },
       workspaceRoot,
     );
-    expect(r.ok).toBe(false);
+    expect(r.ok).toBe(true);
   });
 });
 
@@ -226,5 +228,83 @@ describe("provider base contract (CREATOR-002)", () => {
     };
     expect(providerSupports(provider, "fetch")).toBe(true);
     expect(providerSupports(provider, "publish")).toBe(false);
+  });
+});
+
+describe("validator hardening (external review findings)", () => {
+  it("never throws on null/malformed assets — returns typed errors", () => {
+    expect(() =>
+      validateCreatorAsset(null as unknown as CreatorAsset, workspaceRoot),
+    ).not.toThrow();
+    const r = validateCreatorAsset(
+      null as unknown as CreatorAsset,
+      workspaceRoot,
+    );
+    expect(r.ok).toBe(false);
+  });
+
+  it("never throws when draft media contains a malformed element", () => {
+    expect(() =>
+      validatePlatformPostDraft(
+        {
+          platform: "x",
+          media: [null as unknown as CreatorAsset],
+        },
+        workspaceRoot,
+      ),
+    ).not.toThrow();
+    const r = validatePlatformPostDraft(
+      { platform: "x", media: [null as unknown as CreatorAsset] },
+      workspaceRoot,
+    );
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r).join("\n")).toContain("media");
+  });
+
+  it("never throws on null CredentialRef — serializes an empty reference", () => {
+    expect(() =>
+      serializeCredentialRef(null as unknown as CredentialRef),
+    ).not.toThrow();
+    const serialized = serializeCredentialRef(null as unknown as CredentialRef);
+    expect(JSON.parse(serialized)).toEqual({ provider: "", key: "" });
+  });
+
+  it("never throws on a null provider — reports no support", () => {
+    expect(() =>
+      providerSupports(null as unknown as CreatorProvider, "fetch"),
+    ).not.toThrow();
+    expect(providerSupports(null as unknown as CreatorProvider, "fetch")).toBe(
+      false,
+    );
+  });
+
+  it("drops every secret-like smuggled field, not just `secret`", () => {
+    for (const field of ["token", "apiKey", "value", "Authorization"]) {
+      const smuggled = {
+        provider: "postiz",
+        key: "main",
+        [field]: "super-secret-123",
+      } as unknown as CredentialRef;
+      const serialized = serializeCredentialRef(smuggled);
+      expect(serialized).not.toContain("super-secret-123");
+    }
+  });
+
+  it("sanitizes known-code error messages that contain stack frames", () => {
+    const err = normalizeCreatorError({
+      code: "CREATOR_INVALID_ASSET",
+      message: "boom\n    at provider.ts:1:1",
+    });
+    expect(err.message).not.toContain("at provider.ts");
+    expect(err.code).toBe("CREATOR_INVALID_ASSET");
+  });
+
+  it("preserves structured context on known-code errors", () => {
+    const err = normalizeCreatorError({
+      code: "CREATOR_PROVIDER_TIMEOUT",
+      message: "timed out",
+      context: { timeoutMs: 5000 },
+    });
+    expect(err.context).toEqual({ timeoutMs: 5000 });
   });
 });
