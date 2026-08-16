@@ -65,6 +65,13 @@ export interface ContractSuiteOptions {
    */
   runner?: ExecutionRunner;
   /**
+   * Per-tool runner overrides (takes precedence over `runner` for the named
+   * tools). Useful when different tools of the same plugin depend on
+   * different binary behaviors (e.g. ffprobe returning different stream
+   * metadata) that a single shared runner cannot represent.
+   */
+  runnerByTool?: Record<string, ExecutionRunner>;
+  /**
    * Permission context used for execution checks. Defaults to approved
    * (`{ approved: true }`) so workspace-write tools (which gate on
    * `ctx.permission`) can be exercised end-to-end by the kit; the denial
@@ -167,6 +174,11 @@ export async function runContractSuite(
     // it is exempt from the "valid args succeed" execution checks (it is
     // exercised by check 9 instead).
     const isBinaryProbe = tool.name === options.missingBinaryTool;
+    // A per-tool runner overrides the shared one for this tool's executions.
+    const toolRunner = options.runnerByTool?.[tool.name];
+    const toolCtx = toolRunner
+      ? { ...ctx, run: toolRunner }
+      : ctx;
 
     // 4. schema valid
     const schemaOk =
@@ -205,7 +217,7 @@ export async function runContractSuite(
     //    for valid args is a non-functional tool and must not pass.
     if (!isBinaryProbe) {
       try {
-        const validResult = await tool.execute(spec.valid, ctx);
+        const validResult = await tool.execute(spec.valid, toolCtx);
         const accepted =
           isCanonicalResult(validResult) && validResult.ok === true;
         checks.push(
@@ -243,7 +255,7 @@ export async function runContractSuite(
 
     // 8. invalid args rejected with InvalidArguments
     try {
-      const invalidResult = await tool.execute(spec.invalid, ctx);
+      const invalidResult = await tool.execute(spec.invalid, toolCtx);
       checks.push(
         check(
           `invalid args rejected: ${tool.name}`,
