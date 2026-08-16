@@ -1,8 +1,8 @@
 # PROJECT_STATUS
 
 Current Version: 0.1.0 (bootstrap — no tag yet)
-Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-011)
-Current Issue: CREATOR-011 MERGED — creator-localize (PR #22)
+Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-012)
+Current Issue: CREATOR-012 MERGED — creator-motion (PR #24)
 
 ## Completed (merged + closed with evidence)
 
@@ -84,10 +84,17 @@ Current Issue: CREATOR-011 MERGED — creator-localize (PR #22)
   compatible external adapter (Apache-2.0, no vendoring). 13 tests. External
   review APPROVE (1 round + NB cleanup: overwrite guard on derived output,
   dub re-asserts voice authorization).
+- **CREATOR-012 creator-motion** (PR #24): 5 tools (motion_templates …
+  motion_preview), template metadata (id/name/aspectRatios/inputSchema/
+  estimatedDuration/engine), input-schema + aspect-ratio validation, render
+  timeout budget, variant collision detection, fully-local deterministic mock
+  renderer + generic Remotion-compatible provider (Remotion license gate:
+  custom/NOASSERTION, no vendoring, CI mock-only — re-check recorded in
+  UPSTREAM_LICENSES.md). 14 tests. External review APPROVE (1 round + NB
+  comment: canonical-path binding documented).
 
 ## In progress / planned
 
-- CREATOR-012 creator-motion
 - CREATOR-013 creator-publish
 - CREATOR-014 Creator Skills
 - CREATOR-015 Presets + E2E Stories
