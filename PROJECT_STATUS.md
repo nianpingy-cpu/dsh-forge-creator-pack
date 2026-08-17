@@ -1,8 +1,8 @@
 # PROJECT_STATUS
 
-Current Version: 0.1.0 (bootstrap — no tag yet)
-Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-015)
-Current Issue: CREATOR-015 MERGED — Presets + E2E Stories (PR #30)
+Current Version: 0.1.0 (tagged v0.1.0)
+Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-016) — COMPLETE
+Current Issue: CREATOR-016 MERGED — Release Hardening (PR #32)
 
 ## Completed (merged + closed with evidence)
 
@@ -129,7 +129,20 @@ Current Issue: CREATOR-015 MERGED — Presets + E2E Stories (PR #30)
   (0aee2b8) -> GREEN (177d07d) -> REFACTOR (5712565) + NB fixes (31fb1f7).
   docs/creator/PRESETS.md. Full suite 435 tests / 27 files. External review
   APPROVE (1 round, no blocking findings).
+- **CREATOR-016 Release Hardening** (PR #32): v0.1.0 release gate —
+  `scripts/creator-release-gate.ts` (docs complete, README `## Creator Pack`
+  entry, security audit clean, license & ecosystem matrix valid, no tracked
+  secret files) wired into CI creator-contract; `scripts/creator-security-
+  audit.ts` (API keys/tokens/private keys/Authorization headers/credential
+  assignments, absolute user paths, >1 MiB media; URL userinfo deliberately
+  not a rule — redaction proof). Docs: QUICKSTART/SAFETY/PROVIDERS/EXAMPLES/
+  RELEASE_NOTES.md + main README entry. Fresh Clone Validation passed on
+  Windows (clean clone → install → typecheck → lint → test 438 → build →
+  gate) and CI ubuntu. Strict TDD RED (071777b) → GREEN (f5b816e) → REFACTOR
+  (d990666) + NB fixes (b8c4cb3). Full suite 438 tests / 28 files. External
+  review APPROVE (1 round, no blocking findings). Tagged v0.1.0; release
+  merged to main.
 
 ## In progress / planned
 
-- CREATOR-016 Release Hardening (v0.1.0 release)
+- None — Creator Alpha (CREATOR-001 … CREATOR-016) complete; v0.1.0 tagged.
