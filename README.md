@@ -29,7 +29,21 @@ composable presets and guided by authoring skills:
 Entry points: [docs/creator/README.md](docs/creator/README.md) (index),
 [QUICKSTART](docs/creator/QUICKSTART.md), [SAFETY](docs/creator/SAFETY.md),
 [PROVIDERS](docs/creator/PROVIDERS.md), [EXAMPLES](docs/creator/EXAMPLES.md),
-[RELEASE_NOTES](docs/creator/RELEASE_NOTES.md).
+[RELEASE_NOTES](docs/creator/RELEASE_NOTES.md),
+[ACCEPTANCE](docs/creator/ACCEPTANCE.md).
+
+## Quickstart
+
+```sh
+git clone git@github.com:nianpingy-cpu/dsh-forge-creator-pack.git
+cd dsh-forge-creator-pack
+pnpm install
+pnpm test        # 442 unit + contract + integration + e2e tests
+```
+
+Then pick a preset and drive its tools — the five-minute walkthrough (research
+flow, approval-gated publish) is in
+[docs/creator/QUICKSTART.md](docs/creator/QUICKSTART.md).
 
 ## Plugins
 
