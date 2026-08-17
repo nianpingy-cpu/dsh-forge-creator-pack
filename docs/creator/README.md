@@ -10,9 +10,15 @@ Docs for the DSH Forge Creator Pack, built issue-by-issue.
   build, reuse, integrate or explicitly do not build.
 - [PRESETS.md](PRESETS.md) — CREATOR-015: the 4 composable presets and the 5
   deterministic E2E stories.
-- [SAFETY.md](SAFETY.md) — planned (CREATOR-003 / CREATOR-016).
-- [PROVIDERS.md](PROVIDERS.md) — planned (CREATOR-016).
-- [EXAMPLES.md](EXAMPLES.md) — planned (CREATOR-016).
+- [QUICKSTART.md](QUICKSTART.md) — CREATOR-016: install, presets, minimal
+  research flow, approval-gated publish.
+- [SAFETY.md](SAFETY.md) — CREATOR-016: permission & approval model, process &
+  network safety, secret handling, rights & provenance.
+- [PROVIDERS.md](PROVIDERS.md) — CREATOR-016: mock (CI default) vs external
+  adapter providers and license posture.
+- [EXAMPLES.md](EXAMPLES.md) — CREATOR-016: the five E2E stories as operator
+  walkthroughs.
+- [RELEASE_NOTES.md](RELEASE_NOTES.md) — CREATOR-016: v0.1.0 release notes.
 
 The machine-readable source of truth for the ecosystem decisions is
 [ecosystem.json](ecosystem.json) (added in CREATOR-001).
