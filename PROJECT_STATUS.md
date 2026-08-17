@@ -1,8 +1,8 @@
 # PROJECT_STATUS
 
-Current Version: 0.1.0 (tagged v0.1.0)
+Current Version: 0.1.0 (tagged v0.1.0; §30 final acceptance follow-up merged)
 Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-016) — COMPLETE
-Current Issue: CREATOR-016 MERGED — Release Hardening (PR #32)
+Current Issue: CREATOR-016 §30 final acceptance MERGED — E2E coverage (PR #34)
 
 ## Completed (merged + closed with evidence)
 
@@ -142,7 +142,19 @@ Current Issue: CREATOR-016 MERGED — Release Hardening (PR #32)
   (d990666) + NB fixes (b8c4cb3). Full suite 438 tests / 28 files. External
   review APPROVE (1 round, no blocking findings). Tagged v0.1.0; release
   merged to main.
+- **CREATOR-016 §30 Final Acceptance Coverage** (PR #34, post-release):
+  closed the taskbook §30 gap — all 8 final acceptance scenarios now have
+  deterministic E2E coverage. `acceptance-coverage.test.ts` maps the 8
+  scenarios to story files (RED ad2d145 → GREEN 76c27ed adds story-f
+  approval-invalidation: publish different draft B with A's approval →
+  PermissionDenied; story-g retry-idempotency: status unknown → query →
+  published, exactly one post & one publish call; story-a gains topic_score
+  for Scenario 1's opportunity score). `docs/creator/ACCEPTANCE.md` records
+  the 8-scenario map + fresh-clone run log. NB fixes 650b11c (publishCallCount
+  delta, doc count). Full suite 442 tests / 31 files. External review APPROVE
+  (1 round, no blocking findings).
 
 ## In progress / planned
 
-- None — Creator Alpha (CREATOR-001 … CREATOR-016) complete; v0.1.0 tagged.
+- None — Creator Alpha (CREATOR-001 … CREATOR-016) complete; v0.1.0 tagged;
+  §30 final acceptance closed.
