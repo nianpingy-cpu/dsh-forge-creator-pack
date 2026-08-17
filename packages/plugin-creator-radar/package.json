@@ -1,0 +1,22 @@
+{
+  "name": "@dsh-forge-creator/plugin-creator-radar",
+  "version": "0.1.0",
+  "description": "Hot-topic & topic-scoring radar for creators: normalized, evidence-backed topic candidates (TrendRadar-compatible adapter, RSS provider, mock provider)",
+  "license": "MIT",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "publishConfig": {
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean"
+  },
+  "dependencies": {
+    "@dsh-forge-creator/core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0"
+  }
+}

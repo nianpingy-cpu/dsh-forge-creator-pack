@@ -1,0 +1,33 @@
+{
+  "name": "@dsh-forge-creator/presets",
+  "version": "0.1.0",
+  "description": "Composable Creator Pack presets (composition/config only; no plugin code duplication)",
+  "license": "MIT",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "publishConfig": {
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean"
+  },
+  "dependencies": {
+    "@dsh-forge-creator/core": "workspace:*",
+    "@dsh-forge-creator/plugin-ffmpeg": "workspace:*",
+    "@dsh-forge-creator/plugin-creator-capture": "workspace:*",
+    "@dsh-forge-creator/plugin-creator-clips": "workspace:*",
+    "@dsh-forge-creator/plugin-creator-cover": "workspace:*",
+    "@dsh-forge-creator/plugin-creator-localize": "workspace:*",
+    "@dsh-forge-creator/plugin-creator-motion": "workspace:*",
+    "@dsh-forge-creator/plugin-creator-publish": "workspace:*",
+    "@dsh-forge-creator/plugin-creator-radar": "workspace:*",
+    "@dsh-forge-creator/plugin-creator-short-video": "workspace:*",
+    "@dsh-forge-creator/plugin-creator-transcribe": "workspace:*",
+    "@dsh-forge-creator/plugin-creator-voice": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0"
+  }
+}

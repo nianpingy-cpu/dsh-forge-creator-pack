@@ -1,30 +1,148 @@
 # PROJECT_STATUS
 
-Current Version: 0.1.0 (bootstrap — no tag yet)
-Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-006)
-Current Issue: bootstrap committed
+Current Version: 0.1.0 (tagged v0.1.0)
+Current Milestone: Creator Alpha (CREATOR-001 … CREATOR-016) — COMPLETE
+Current Issue: CREATOR-016 MERGED — Release Hardening (PR #32)
 
 ## Completed (merged + closed with evidence)
 
 - bootstrap monorepo skeleton: adapted `@dsh-forge-creator/core` (from
   `@dsh-forge/core`, MIT), root gates (typecheck/lint/test/build), CI, docs/creator,
   AGENTS.md, README, no-shell ESLint rule + regression tests
+- **CREATOR-001 Ecosystem & Overlap Lock** (PR #2): `docs/creator/ecosystem.json`
+  (20 capability rows) + ECOSYSTEM_MATRIX / UPSTREAM_LICENSES /
+  BUILD_REUSE_DECISIONS, validator `scripts/creator-ecosystem-check.ts`,
+  `tests/creator-ecosystem.test.ts` (11 tests), `creator-contract` CI job.
+  External review APPROVE (2 rounds, no blocking findings).
+- **CREATOR-002 Creator Core Contracts** (PR #4): Creator Domain in
+  `@dsh-forge-creator/core` — `src/creator/{types,validate,errors,provider}` +
+  `index`; shared CreatorAsset / RightsMetadata / PlatformPostDraft /
+  PublishResult / CredentialRef / CreatorError / CreatorProvider contracts.
+  26 creator-contract tests. External review APPROVE (2 rounds, no blocking
+  findings).
+- **CREATOR-003 Creator Safety Policy** (PR #6): `src/creator/safety.ts` —
+  creator mutation classes, approval gate (scope/content-hash/expiry), rights
+  policy, voice authorization, bypass-flag rejection, credential-plaintext
+  rejection, log redaction, resource limits. 32 creator-safety tests. External
+  review APPROVE (2 rounds, no blocking findings).
+- **CREATOR-004 creator-radar** (PR #8): first plugin package — 9 tools
+  (trend_sources … opportunity_rank), 3 providers (mock fixture / RSS /
+  TrendRadar-compatible adapter), evidence-backed scoring, shared contract
+  suite; core kit `missingBinaryTool` now optional for binary-free plugins.
+  External review APPROVE (2 rounds, no blocking findings).
+- **CREATOR-005 creator-capture** (PR #10): 8 tools (media_inspect …
+  playlist_download), typed argv[] (never shell/extra args), rights/provenance,
+  permission gate, bounded playlists, source-URL redaction, dry-run. External
+  review APPROVE after 4 rounds (B1–B4 + inspect redaction closed).
+- **CREATOR-006 creator-transcribe** (PR #12): 9 tools (transcribe_media …
+  transcript_export), whisper external-binary provider with stdout-JSON +
+  sidecar fallback (openai-whisper naming), deterministic mock, subtitle
+  renderers with injection-safe sanitization (SRT/VTT/ASS), duration guard
+  (header-only read), permission gates, timeout/redaction. 25 tests. External
+  review APPROVE after 2 rounds (B1 subtitle-injection closed via regression
+  TDD; reviewer-recommended whisper sidecar + JSON-shape cleanup applied).
+- **CREATOR-007 creator-clips** (PR #14): 8 tools (clip_by_time …
+  merge_segments). Carried in `@dsh-forge/plugin-ffmpeg` (MIT) as
+  `@dsh-forge-creator/plugin-ffmpeg` (REUSE — attribution preserved, no
+  reimplementation) and extended with 3 fixed typed operations
+  (video_vertical/video_square with real output-ratio verification via
+  ffprobe, silence_remove). `plugin-creator-clips` is a pure orchestration
+  layer (no ffmpeg argv, no free-form params) composing the adapter; RED
+  range/duration/collision/aspect/no-shell tests. Core gained backward
+  compatible `runnerByTool` + union value types. 21 clips + 72 adapter tests.
+  External review APPROVE (1 round, no blocking findings).
+- **CREATOR-008 creator-short-video** (PR #16): 5 tools (short_video_plan …
+  short_video_preview), centralized Plan Schema (script/aspectRatio/
+  durationTarget/voiceMode/subtitleMode/assetStrategy/outputDir), deterministic
+  mock with a shared module-level job store (plan -> generate -> status ->
+  assets E2E), MoneyPrinterTurbo-compatible provider adapter (MIT, no
+  vendoring, unconfigured -> typed ToolFailure), bounded status polling with
+  typed Timeout, workspace-bounded outputDir, no external-URL/credential leak.
+  20 tests. External review APPROVE (1 round + NB cleanup: dead code removed,
+  permission-denied test added).
+- **CREATOR-009 creator-cover** (PR #18): 7 tools (cover_generate_background …
+  cover_validate), centralized platform profiles (6 platforms with source
+  notes), LocalLayoutProvider (overflow / safe-area / font-fallback), mock
+  background with dimension recording, optional ComfyUI external HTTP/API
+  adapter (GPL-3.0, no vendoring, unconfigured -> typed ToolFailure),
+  cover_variants -> validate -> CreatorAsset[] acceptance. 21 tests. External
+  review APPROVE (1 round + NB cleanup: background default derived from
+  profile, store keying documented).
+- **CREATOR-010 creator-voice** (PR #20): 6 tools (voice_register_reference …
+  voice_preview), mandatory authorization model (authorization: true, note
+  optional), reference metadata = source/owner/checksum/createdAt (no
+  biometrics), authorized-reference-only clone/transfer (no impersonation
+  bypass), workspace-bounded outputs, credential redaction on all outputs,
+  deterministic mock + OpenVoice-compatible external adapter (no vendoring).
+  16 tests. External review APPROVE (1 round + NB comment: canonical-path
+  binding documented for the future real provider).
+- **CREATOR-011 creator-localize** (PR #22): 6 tools (subtitle_translate …
+  localize_preview), deterministic SRT parse/validate/align/resegment (valid
+  timestamps, no negative time), explicit same-language policy, overwrite
+  guards, dub_video passes the creator-voice authorized-reference policy
+  (public getReference export added to creator-voice), mock + VideoLingo-
+  compatible external adapter (Apache-2.0, no vendoring). 13 tests. External
+  review APPROVE (1 round + NB cleanup: overwrite guard on derived output,
+  dub re-asserts voice authorization).
+- **CREATOR-012 creator-motion** (PR #24): 5 tools (motion_templates …
+  motion_preview), template metadata (id/name/aspectRatios/inputSchema/
+  estimatedDuration/engine), input-schema + aspect-ratio validation, render
+  timeout budget, variant collision detection, fully-local deterministic mock
+  renderer + generic Remotion-compatible provider (Remotion license gate:
+  custom/NOASSERTION, no vendoring, CI mock-only — re-check recorded in
+  UPSTREAM_LICENSES.md). 14 tests. External review APPROVE (1 round + NB
+  comment: canonical-path binding documented).
+- **CREATOR-013 creator-publish** (PR #26): the highest-risk plugin — 9 tools
+  (publisher_accounts … post_cancel_schedule), strict draft -> validate ->
+  preview -> explicit approval -> schedule/publish lifecycle (prompt can NEVER
+  immediately publish), approval gate via core assertCreatorApproval
+  (content-hash/scope/expiry bound -> PermissionDenied), idempotency keys,
+  retry safety (request-failed vs status-unknown; query remote status before
+  resending), dry-run, platform capability discovery, credential redaction on
+  all outputs, CI mock-only (Postiz AGPL-3.0 / Official / Local as external
+  unconfigured adapters, no vendoring, no browser anti-detection in core).
+  20 tests. External review APPROVE (1 round + NB hardening: failed-outcome
+  retry test, strengthened idempotency/unknown assertions, status redaction).
+- **CREATOR-014 Creator Skills** (PR #28): 7 skills under `skills/creator/`
+  (topic-to-outline, short-video-script, platform-repurpose,
+  xiaohongshu-writing, bilibili-metadata, youtube-metadata, creator-humanize)
+  — each with Purpose + 8 required sections (Trigger/Inputs/Workflow/Tool
+  preference/Quality checklist/Platform constraints/Failure/Do-not-do),
+  referencing only REGISTERED_TOOLS and teaching no approval-bypass / secret-
+  read / guaranteed-traffic guidance. `scripts/creator-skill-lint.ts` enforces
+  this (exact-Purpose heading check, CRLF normalization), gated in the CI
+  `creator-contract` job; `.gitattributes` pins skills to LF. `tests/creator-
+  skill.test.ts`: 7 tests incl. 5 bad-guidance fixtures rejected for their
+  exact rule. Strict TDD RED (481ddac) -> GREEN (ef0e389) -> REFACTOR
+  (8d62044). External review APPROVE (1 round, no blocking findings).
+- **CREATOR-015 Presets + E2E Stories** (PR #30): `presets/presets`
+  (`@dsh-forge-creator/presets`) — composition-only CreatorPreset manifests
+  (creator-research / creator-video / creator-publisher / creator-full,
+  exact taskbook plugin sets + skill slugs, no plugin code duplication), 9
+  preset tests (exact package sets, no tool collisions, skills on disk,
+  creator-full = union, core contract match). `tests/creator-e2e/`: shared
+  deterministic harness (real plugin tools over a fresh temp workspace, canned
+  media runner) + 5 E2E stories (A 热点到素材 with approval-gated capture, B
+  长视频到短视频, C 海外本地化, D 封面变体, E 安全发布 asserting
+  PermissionDenied before approval + published after). contentHashOf
+  re-exported from publish's public index (review NB). Strict TDD RED
+  (0aee2b8) -> GREEN (177d07d) -> REFACTOR (5712565) + NB fixes (31fb1f7).
+  docs/creator/PRESETS.md. Full suite 435 tests / 27 files. External review
+  APPROVE (1 round, no blocking findings).
+- **CREATOR-016 Release Hardening** (PR #32): v0.1.0 release gate —
+  `scripts/creator-release-gate.ts` (docs complete, README `## Creator Pack`
+  entry, security audit clean, license & ecosystem matrix valid, no tracked
+  secret files) wired into CI creator-contract; `scripts/creator-security-
+  audit.ts` (API keys/tokens/private keys/Authorization headers/credential
+  assignments, absolute user paths, >1 MiB media; URL userinfo deliberately
+  not a rule — redaction proof). Docs: QUICKSTART/SAFETY/PROVIDERS/EXAMPLES/
+  RELEASE_NOTES.md + main README entry. Fresh Clone Validation passed on
+  Windows (clean clone → install → typecheck → lint → test 438 → build →
+  gate) and CI ubuntu. Strict TDD RED (071777b) → GREEN (f5b816e) → REFACTOR
+  (d990666) + NB fixes (b8c4cb3). Full suite 438 tests / 28 files. External
+  review APPROVE (1 round, no blocking findings). Tagged v0.1.0; release
+  merged to main.
 
 ## In progress / planned
 
-- CREATOR-001 Ecosystem & Overlap Lock
-- CREATOR-002 Creator Core Contracts
-- CREATOR-003 Creator Safety Policy
-- CREATOR-004 creator-radar
-- CREATOR-005 creator-capture
-- CREATOR-006 creator-transcribe
-- CREATOR-007 creator-clips
-- CREATOR-008 creator-short-video
-- CREATOR-009 creator-cover
-- CREATOR-010 creator-voice
-- CREATOR-011 creator-localize
-- CREATOR-012 creator-motion
-- CREATOR-013 creator-publish
-- CREATOR-014 Creator Skills
-- CREATOR-015 Presets + E2E Stories
-- CREATOR-016 Release Hardening (v0.1.0 release)
+- None — Creator Alpha (CREATOR-001 … CREATOR-016) complete; v0.1.0 tagged.

@@ -14,7 +14,24 @@ classes, diagnostics and the contract test kit. No second infrastructure.
 > The product line: **DSH Forge Creator Pack — 让 DeepSeek Harness 不只是帮你想内容，
 > 而是真正完成从选题、素材、制作到受控发布的创作者工作流。**
 
-## Plugins (planned)
+## Creator Pack
+
+Typed, safe creator-workflow plugins for DeepSeek Harness, organized into four
+composable presets and guided by authoring skills:
+
+- **creator-research** — topic radar → licensed capture → transcription.
+- **creator-video** — long-form → short-form: transcribe, clip, vertical,
+  subtitle, cover, voice, localize, motion (+ ffmpeg media adapter).
+- **creator-publisher** — approval-gated draft → preview → publish/schedule
+  with cover assets and platform-specific writing skills.
+- **creator-full** — every creator plugin + all 7 skills.
+
+Entry points: [docs/creator/README.md](docs/creator/README.md) (index),
+[QUICKSTART](docs/creator/QUICKSTART.md), [SAFETY](docs/creator/SAFETY.md),
+[PROVIDERS](docs/creator/PROVIDERS.md), [EXAMPLES](docs/creator/EXAMPLES.md),
+[RELEASE_NOTES](docs/creator/RELEASE_NOTES.md).
+
+## Plugins
 
 | Logical ID | Plugin | Purpose |
 |---|---|---|

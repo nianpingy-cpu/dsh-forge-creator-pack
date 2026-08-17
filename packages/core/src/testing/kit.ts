@@ -47,8 +47,11 @@ export interface ContractSuiteOptions {
    * runner condition to the normalized BinaryNotFound error — so a plugin
    * that fails to implement binary detection is caught, and real plugins
    * wrapping installed binaries can pass deterministically.
+   *
+   * Optional: a plugin that wraps no binary at all (e.g. a pure-data plugin)
+   * may omit it; the binary-missing check then passes trivially.
    */
-  missingBinaryTool: string;
+  missingBinaryTool?: string;
   /**
    * Arguments to invoke the missing-binary probe with (defaults to {}). Real
    * plugin tools usually require arguments before they reach ctx.run, so
@@ -61,6 +64,13 @@ export interface ContractSuiteOptions {
    * depending on real binaries/environment.
    */
   runner?: ExecutionRunner;
+  /**
+   * Per-tool runner overrides (takes precedence over `runner` for the named
+   * tools). Useful when different tools of the same plugin depend on
+   * different binary behaviors (e.g. ffprobe returning different stream
+   * metadata) that a single shared runner cannot represent.
+   */
+  runnerByTool?: Record<string, ExecutionRunner>;
   /**
    * Permission context used for execution checks. Defaults to approved
    * (`{ approved: true }`) so workspace-write tools (which gate on
@@ -164,6 +174,11 @@ export async function runContractSuite(
     // it is exempt from the "valid args succeed" execution checks (it is
     // exercised by check 9 instead).
     const isBinaryProbe = tool.name === options.missingBinaryTool;
+    // A per-tool runner overrides the shared one for this tool's executions.
+    const toolRunner = options.runnerByTool?.[tool.name];
+    const toolCtx = toolRunner
+      ? { ...ctx, run: toolRunner }
+      : ctx;
 
     // 4. schema valid
     const schemaOk =
@@ -202,7 +217,7 @@ export async function runContractSuite(
     //    for valid args is a non-functional tool and must not pass.
     if (!isBinaryProbe) {
       try {
-        const validResult = await tool.execute(spec.valid, ctx);
+        const validResult = await tool.execute(spec.valid, toolCtx);
         const accepted =
           isCanonicalResult(validResult) && validResult.ok === true;
         checks.push(
@@ -240,7 +255,7 @@ export async function runContractSuite(
 
     // 8. invalid args rejected with InvalidArguments
     try {
-      const invalidResult = await tool.execute(spec.invalid, ctx);
+      const invalidResult = await tool.execute(spec.invalid, toolCtx);
       checks.push(
         check(
           `invalid args rejected: ${tool.name}`,
@@ -267,9 +282,21 @@ export async function runContractSuite(
   //    the runner rather than hardcoding the error) and (b) mapped the
   //    runner's condition to the normalized BinaryNotFound error. This is
   //    deterministic for real plugins wrapping installed binaries and still
-  //    catches plugins that fail to implement binary detection.
-  const probe = plugin.tools.find((t) => t.name === options.missingBinaryTool);
-  if (!probe) {
+  //    catches plugins that fail to implement binary detection. A plugin
+  //    that declares no binary dependency omits missingBinaryTool and this
+  //    check passes trivially.
+  const probe = options.missingBinaryTool
+    ? plugin.tools.find((t) => t.name === options.missingBinaryTool)
+    : undefined;
+  if (!options.missingBinaryTool) {
+    checks.push(
+      check(
+        "binary-missing path returns BinaryNotFound",
+        true,
+        "no binary dependency declared (missingBinaryTool omitted)",
+      ),
+    );
+  } else if (!probe) {
     checks.push(
       check(
         "binary-missing path returns BinaryNotFound",

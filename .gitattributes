@@ -1,0 +1,3 @@
+# Keep skill markdown on LF so the skill lint's heading anchors are stable
+# across checkouts (skills are authored/committed as LF going forward).
+skills/**/*.md text eol=lf

@@ -11,6 +11,42 @@ importers:
       '@dsh-forge-creator/core':
         specifier: workspace:*
         version: link:packages/core
+      '@dsh-forge-creator/plugin-creator-capture':
+        specifier: workspace:*
+        version: link:packages/plugin-creator-capture
+      '@dsh-forge-creator/plugin-creator-clips':
+        specifier: workspace:*
+        version: link:packages/plugin-creator-clips
+      '@dsh-forge-creator/plugin-creator-cover':
+        specifier: workspace:*
+        version: link:packages/plugin-creator-cover
+      '@dsh-forge-creator/plugin-creator-localize':
+        specifier: workspace:*
+        version: link:packages/plugin-creator-localize
+      '@dsh-forge-creator/plugin-creator-motion':
+        specifier: workspace:*
+        version: link:packages/plugin-creator-motion
+      '@dsh-forge-creator/plugin-creator-publish':
+        specifier: workspace:*
+        version: link:packages/plugin-creator-publish
+      '@dsh-forge-creator/plugin-creator-radar':
+        specifier: workspace:*
+        version: link:packages/plugin-creator-radar
+      '@dsh-forge-creator/plugin-creator-short-video':
+        specifier: workspace:*
+        version: link:packages/plugin-creator-short-video
+      '@dsh-forge-creator/plugin-creator-transcribe':
+        specifier: workspace:*
+        version: link:packages/plugin-creator-transcribe
+      '@dsh-forge-creator/plugin-creator-voice':
+        specifier: workspace:*
+        version: link:packages/plugin-creator-voice
+      '@dsh-forge-creator/plugin-ffmpeg':
+        specifier: workspace:*
+        version: link:packages/plugin-ffmpeg
+      '@dsh-forge-creator/presets':
+        specifier: workspace:*
+        version: link:presets/presets
       '@eslint/js':
         specifier: ^9.30.0
         version: 9.39.5
@@ -43,6 +79,165 @@ importers:
         version: 3.2.7(@types/node@24.13.3)
 
   packages/core:
+    devDependencies:
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(postcss@8.5.26)(typescript@5.9.3)
+
+  packages/plugin-creator-capture:
+    dependencies:
+      '@dsh-forge-creator/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(postcss@8.5.26)(typescript@5.9.3)
+
+  packages/plugin-creator-clips:
+    dependencies:
+      '@dsh-forge-creator/core':
+        specifier: workspace:*
+        version: link:../core
+      '@dsh-forge-creator/plugin-ffmpeg':
+        specifier: workspace:*
+        version: link:../plugin-ffmpeg
+    devDependencies:
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(postcss@8.5.26)(typescript@5.9.3)
+
+  packages/plugin-creator-cover:
+    dependencies:
+      '@dsh-forge-creator/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(postcss@8.5.26)(typescript@5.9.3)
+
+  packages/plugin-creator-localize:
+    dependencies:
+      '@dsh-forge-creator/core':
+        specifier: workspace:*
+        version: link:../core
+      '@dsh-forge-creator/plugin-creator-voice':
+        specifier: workspace:*
+        version: link:../plugin-creator-voice
+    devDependencies:
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(postcss@8.5.26)(typescript@5.9.3)
+
+  packages/plugin-creator-motion:
+    dependencies:
+      '@dsh-forge-creator/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(postcss@8.5.26)(typescript@5.9.3)
+
+  packages/plugin-creator-publish:
+    dependencies:
+      '@dsh-forge-creator/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(postcss@8.5.26)(typescript@5.9.3)
+
+  packages/plugin-creator-radar:
+    dependencies:
+      '@dsh-forge-creator/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(postcss@8.5.26)(typescript@5.9.3)
+
+  packages/plugin-creator-short-video:
+    dependencies:
+      '@dsh-forge-creator/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(postcss@8.5.26)(typescript@5.9.3)
+
+  packages/plugin-creator-transcribe:
+    dependencies:
+      '@dsh-forge-creator/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(postcss@8.5.26)(typescript@5.9.3)
+
+  packages/plugin-creator-voice:
+    dependencies:
+      '@dsh-forge-creator/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(postcss@8.5.26)(typescript@5.9.3)
+
+  packages/plugin-ffmpeg:
+    dependencies:
+      '@dsh-forge-creator/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(postcss@8.5.26)(typescript@5.9.3)
+
+  presets/presets:
+    dependencies:
+      '@dsh-forge-creator/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@dsh-forge-creator/plugin-creator-capture':
+        specifier: workspace:*
+        version: link:../../packages/plugin-creator-capture
+      '@dsh-forge-creator/plugin-creator-clips':
+        specifier: workspace:*
+        version: link:../../packages/plugin-creator-clips
+      '@dsh-forge-creator/plugin-creator-cover':
+        specifier: workspace:*
+        version: link:../../packages/plugin-creator-cover
+      '@dsh-forge-creator/plugin-creator-localize':
+        specifier: workspace:*
+        version: link:../../packages/plugin-creator-localize
+      '@dsh-forge-creator/plugin-creator-motion':
+        specifier: workspace:*
+        version: link:../../packages/plugin-creator-motion
+      '@dsh-forge-creator/plugin-creator-publish':
+        specifier: workspace:*
+        version: link:../../packages/plugin-creator-publish
+      '@dsh-forge-creator/plugin-creator-radar':
+        specifier: workspace:*
+        version: link:../../packages/plugin-creator-radar
+      '@dsh-forge-creator/plugin-creator-short-video':
+        specifier: workspace:*
+        version: link:../../packages/plugin-creator-short-video
+      '@dsh-forge-creator/plugin-creator-transcribe':
+        specifier: workspace:*
+        version: link:../../packages/plugin-creator-transcribe
+      '@dsh-forge-creator/plugin-creator-voice':
+        specifier: workspace:*
+        version: link:../../packages/plugin-creator-voice
+      '@dsh-forge-creator/plugin-ffmpeg':
+        specifier: workspace:*
+        version: link:../../packages/plugin-ffmpeg
     devDependencies:
       tsup:
         specifier: ^8.5.0
