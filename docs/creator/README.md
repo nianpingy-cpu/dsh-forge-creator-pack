@@ -19,6 +19,8 @@ Docs for the DSH Forge Creator Pack, built issue-by-issue.
 - [EXAMPLES.md](EXAMPLES.md) — CREATOR-016: the five E2E stories as operator
   walkthroughs.
 - [RELEASE_NOTES.md](RELEASE_NOTES.md) — CREATOR-016: v0.1.0 release notes.
+- [ACCEPTANCE.md](ACCEPTANCE.md) — CREATOR-016 §30: the 8 final acceptance
+  scenarios, their E2E coverage, and the fresh-clone run log.
 
 The machine-readable source of truth for the ecosystem decisions is
 [ecosystem.json](ecosystem.json) (added in CREATOR-001).

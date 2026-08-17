@@ -35,6 +35,21 @@ describe("E2E Story A — 热点到素材 (CREATOR-015)", () => {
     const rankedTopics = JSON.parse(ranked.raw!) as CreatorTopic[];
     expect(rankedTopics.length).toBeGreaterThan(0);
     expect(rankedTopics.length).toBeLessThanOrEqual(3);
+    for (const topic of rankedTopics) {
+      expect(Array.isArray(topic.evidence)).toBe(true);
+      expect(topic.evidence.length).toBeGreaterThan(0);
+    }
+
+    // 2b. §30 Scenario 1: the top pick carries a traceable opportunity score.
+    const scored = await e2e.invoke("topic_score", {
+      topicId: rankedTopics[0]!.id,
+    });
+    expect(scored.ok).toBe(true);
+    const breakdown = JSON.parse(scored.raw!) as {
+      scores: { opportunity?: number };
+      uncertainty: unknown[];
+    };
+    expect(typeof breakdown.scores.opportunity).toBe("number");
 
     // 3. select a source for capture
     const selected = rankedTopics[0]!;
