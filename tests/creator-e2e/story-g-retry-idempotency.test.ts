@@ -33,6 +33,7 @@ describe("E2E Story G — 重试幂等 (CREATOR-016 §30 S8)", () => {
       (await e2e.invoke("post_create_draft", { draft: DRAFT, provider: "mock" })).raw!,
     ) as { draftId: string };
     const before = __mockPublisher.postCount;
+    const callsBefore = __mockPublisher.publishCallCount;
 
     __mockPublisher.publishOutcome = "unknown";
     try {
@@ -50,7 +51,9 @@ describe("E2E Story G — 重试幂等 (CREATOR-016 §30 S8)", () => {
       __mockPublisher.publishOutcome = "published";
     }
 
-    // Exactly one post was created across the whole flow.
+    // Exactly one post was created across the whole flow, and the publish was
+    // attempted exactly once (no blind resend into the idempotent mock).
     expect(__mockPublisher.postCount - before).toBe(1);
+    expect(__mockPublisher.publishCallCount - callsBefore).toBe(1);
   });
 });

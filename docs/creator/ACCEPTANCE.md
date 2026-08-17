@@ -29,9 +29,9 @@ pnpm exec vitest run tests/creator-e2e # 8 files / 11 tests (all 8 scenarios)
 ## Acceptance run log (2026-08-17)
 
 - **Windows (local fresh clone)**: clean `git clone` of the release branch →
-  `pnpm install --frozen-lockfile` → typecheck/lint/test (438 → now 440 tests
-  with stories F/G) → build → release gate, all pass. E2E suite 8 files / 11
-  tests green.
+  `pnpm install --frozen-lockfile` → typecheck/lint/test (442 tests / 31 files
+  including stories F/G + the coverage test) → build → release gate, all pass.
+  E2E suite 8 files / 11 tests green.
 - **ubuntu-latest (CI)**: `verify` + `creator-contract` jobs run on every PR
   (fresh checkout), including the E2E stories and the release gate.
 
